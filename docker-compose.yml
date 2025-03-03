@@ -1,0 +1,125 @@
+services:
+  # PHP/Symfony Backend
+  php:
+    build:
+      context: ./docker/dev/php
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend:/var/www/html
+      - ./docker/dev/php/conf.d/xdebug.ini:/usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini:ro
+    depends_on:
+      - database
+      - redis
+      - mercure
+    env_file:
+      - ./backend/.env.local
+    environment:
+      - APP_ENV=dev
+      - PHP_IDE_CONFIG=serverName=symfony
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Nginx for Symfony
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8000:80"
+    volumes:
+      - ./backend:/var/www/html:ro
+      - ./docker/dev/nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      - php
+
+  # Next.js Frontend
+  nextjs:
+    build:
+      context: ./docker/dev/nextjs
+      dockerfile: Dockerfile
+    volumes:
+      - ./frontend:/app:cached
+      - /app/node_modules
+    ports:
+      - "3030:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+      - NEXT_PUBLIC_MERCURE_HUB_URL=http://localhost:9090/.well-known/mercure
+      - WATCHPACK_POLLING=true
+    depends_on:
+      - nginx
+      - mercure
+
+  # PostgreSQL Database
+  database:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app_password
+    healthcheck:
+      test: ["CMD", "pg_isready", "-d", "app", "-U", "app"]
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    volumes:
+      - database_data:/var/lib/postgresql/data:rw
+    ports:
+      - "5432:5432"
+
+  # Redis for caching and messaging
+  redis:
+    image: redis:alpine
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Mercure hub for real-time updates
+  mercure:
+    image: dunglas/mercure
+    restart: unless-stopped
+    environment:
+      # Disable HTTPS for local development
+      SERVER_NAME: ':80'
+      MERCURE_PUBLISHER_JWT_KEY: '!ChangeThisMercureHubJWTSecretKey!'
+      MERCURE_SUBSCRIBER_JWT_KEY: '!ChangeThisMercureHubJWTSecretKey!'
+      MERCURE_EXTRA_DIRECTIVES: |
+        cors_origins http://localhost:3000 http://localhost:8000
+      # Enable dev mode for easier debugging
+      MERCURE_DEV: '1'
+      ALLOW_ANONYMOUS: '1'
+      CORS_ALLOWED_ORIGINS: '*'
+      PUBLISH_ALLOWED_ORIGINS: '*'
+    command: /usr/bin/caddy run --config /etc/caddy/dev.Caddyfile
+    ports:
+      - "9090:80"
+    volumes:
+      - mercure_data:/data
+      - mercure_config:/config
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/healthz"]
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+
+  # Mailpit for email testing
+  mailer:
+    image: axllent/mailpit
+    ports:
+      - "8025:8025"  # Web UI
+      - "1025:1025"  # SMTP server
+    environment:
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+
+volumes:
+  database_data:
+  mercure_data:
+  mercure_config:
+  redis_data:
