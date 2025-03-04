@@ -173,6 +173,7 @@
       <path value="$PROJECT_DIR$/backend/vendor/symfony/yaml" />
       <path value="$PROJECT_DIR$/backend/vendor/symfony/dependency-injection" />
       <path value="$PROJECT_DIR$/backend/vendor/symfony/framework-bundle" />
+      <path value="$PROJECT_DIR$/backend/vendor/symfony/redis-messenger" />
     </include_path>
   </component>
   <component name="PhpInterpreters">

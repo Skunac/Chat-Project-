@@ -10,6 +10,11 @@ RUN apk add --no-cache \
 # Install PHP extensions
 RUN docker-php-ext-install pdo pdo_pgsql
 
+# Install Redis extension
+RUN apk add --no-cache $PHPIZE_DEPS redis \
+    && pecl install redis \
+    && docker-php-ext-enable redis
+
 # Install Xdebug
 RUN apk add --no-cache $PHPIZE_DEPS \
     && pecl install xdebug \

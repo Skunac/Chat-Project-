@@ -7,6 +7,8 @@ services:
     volumes:
       - ./backend:/var/www/html
       - ./docker/dev/php/conf.d/xdebug.ini:/usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini:ro
+    stdin_open: true
+    tty: true
     depends_on:
       - database
       - redis
