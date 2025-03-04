@@ -156,6 +156,18 @@
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/twig/twig" />
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/webmozart/assert" />
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/willdurand/negotiation" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/guzzlehttp/guzzle" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/guzzlehttp/promises" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/guzzlehttp/psr7" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/knpuniversity/oauth2-client-bundle" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/lcobucci/clock" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/league/oauth2-client" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/league/oauth2-google" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/lexik/jwt-authentication-bundle" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/psr/http-client" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/psr/http-factory" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/psr/http-message" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/ralouphie/getallheaders" />
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/symfony/redis-messenger" />
     </content>
     <orderEntry type="inheritedJdk" />
