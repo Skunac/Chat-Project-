@@ -6,6 +6,7 @@ use App\Dto\GoogleAuthDto;
 use App\Entity\User;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Gesdinet\JWTRefreshTokenBundle\Generator\RefreshTokenGeneratorInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -21,6 +22,8 @@ class GoogleAuthService
         private readonly HttpClientInterface $httpClient,
         private readonly AuthService $authService,
         private readonly ApiResponseService $apiResponse,
+        private readonly RefreshTokenGeneratorInterface $refreshTokenGenerator
+
     ) {
     }
 
@@ -124,10 +127,12 @@ class GoogleAuthService
         $this->entityManager->flush();
 
         $token = $this->jwtManager->create($user);
+        $refreshToken = $this->refreshTokenGenerator->createForUserWithTtl($user, ((new \DateTime())->modify('+30 days'))->getTimestamp());
 
         return [
             'user' => $this->authService->getUserData($user),
-            'token' => $token
+            'token' => $token,
+            'refresh_token' => $refreshToken->getRefreshToken(),
         ];
     }
 }

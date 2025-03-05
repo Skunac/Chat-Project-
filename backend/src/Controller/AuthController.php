@@ -72,31 +72,10 @@ class AuthController extends AbstractController
     #[Route('/me', name: 'me', methods: ['GET'])]
     public function me(#[CurrentUser] ?User $user): JsonResponse
     {
-        if (!$user) {
-            return $this->apiResponse->unauthorized('Not authenticated');
-        }
-
         return $this->apiResponse->success(
             $this->authService->getUserData($user),
             Response::HTTP_OK,
             'User profile retrieved'
-        );
-    }
-
-    /**
-     * Refresh JWT token
-     */
-    #[Route('/refresh', name: 'refresh_token', methods: ['POST'])]
-    public function refreshToken(#[CurrentUser] ?User $user): JsonResponse
-    {
-        if (!$user) {
-            return $this->apiResponse->unauthorized('Not authenticated');
-        }
-
-        return $this->apiResponse->success(
-            ['token' => $this->authService->refreshToken($user)],
-            Response::HTTP_OK,
-            'Token refreshed successfully'
         );
     }
 }

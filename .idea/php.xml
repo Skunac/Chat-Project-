@@ -1,5 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="LaravelPint">
+    <laravel_pint_settings>
+      <laravel_pint_by_interpreter asDefaultInterpreter="true" interpreter_id="c7dbc4d7-3feb-436e-84a3-6ebc339a0ec9">
+        <option name="timeout" value="30000" />
+      </laravel_pint_by_interpreter>
+    </laravel_pint_settings>
+  </component>
   <component name="MessDetector">
     <phpmd_settings>
       <phpmd_by_interpreter asDefaultInterpreter="true" interpreter_id="c7dbc4d7-3feb-436e-84a3-6ebc339a0ec9" timeout="30000" />
@@ -14,6 +21,11 @@
   <component name="PHPCodeSnifferOptionsConfiguration">
     <option name="highlightLevel" value="WARNING" />
     <option name="transferred" value="true" />
+  </component>
+  <component name="PhpCSFixer">
+    <phpcsfixer_settings>
+      <phpcs_fixer_by_interpreter asDefaultInterpreter="true" interpreter_id="c7dbc4d7-3feb-436e-84a3-6ebc339a0ec9" timeout="30000" />
+    </phpcsfixer_settings>
   </component>
   <component name="PhpCodeSniffer">
     <phpcs_settings>
@@ -186,6 +198,7 @@
       <path value="$PROJECT_DIR$/backend/vendor/psr/http-client" />
       <path value="$PROJECT_DIR$/backend/vendor/knpuniversity/oauth2-client-bundle" />
       <path value="$PROJECT_DIR$/backend/vendor/league/oauth2-google" />
+      <path value="$PROJECT_DIR$/backend/vendor/gesdinet/jwt-refresh-token-bundle" />
     </include_path>
   </component>
   <component name="PhpInterpreters">
@@ -263,7 +276,7 @@
   <component name="PhpProjectSharedConfiguration" php_language_level="8.2" />
   <component name="PhpStan">
     <PhpStan_settings>
-      <phpstan_by_interpreter asDefaultInterpreter="true" interpreter_id="c3a9bf57-ea23-4ef1-8b65-bf8a4168ab47" timeout="60000" />
+      <phpstan_by_interpreter asDefaultInterpreter="true" interpreter_id="c7dbc4d7-3feb-436e-84a3-6ebc339a0ec9" timeout="60000" />
     </PhpStan_settings>
   </component>
   <component name="PhpStanOptionsConfiguration">
@@ -276,7 +289,7 @@
   </component>
   <component name="Psalm">
     <Psalm_settings>
-      <psalm_fixer_by_interpreter asDefaultInterpreter="true" interpreter_id="c3a9bf57-ea23-4ef1-8b65-bf8a4168ab47" timeout="60000" />
+      <psalm_fixer_by_interpreter asDefaultInterpreter="true" interpreter_id="c7dbc4d7-3feb-436e-84a3-6ebc339a0ec9" timeout="60000" />
     </Psalm_settings>
   </component>
   <component name="PsalmOptionsConfiguration">
