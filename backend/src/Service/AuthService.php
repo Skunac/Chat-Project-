@@ -8,6 +8,7 @@ use App\Entity\User;
 use App\Mapper\UserMapper;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Gesdinet\JWTRefreshTokenBundle\Generator\RefreshTokenGeneratorInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -21,6 +22,7 @@ class AuthService
         private readonly UserRepository $userRepository,
         private readonly UserMapper $userMapper,
         private readonly ApiResponseService $apiResponse,
+        private readonly RefreshTokenGeneratorInterface $refreshTokenGenerator
     ) {
     }
 
@@ -42,10 +44,12 @@ class AuthService
         $this->entityManager->flush();
 
         $token = $this->jwtManager->create($user);
+        $refreshToken = $this->refreshTokenGenerator->createForUserWithTtl($user, ((new \DateTime())->modify('+30 days'))->getTimestamp());
 
         return [
             'user' => $this->getUserData($user),
-            'token' => $token
+            'token' => $token,
+            'refresh_token' => $refreshToken->getRefreshToken(),
         ];
     }
 
