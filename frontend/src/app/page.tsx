@@ -1,101 +1,184 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+import { useState, useEffect } from 'react';
+import axios from 'axios';
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+// Simple types for TypeScript
+interface Message {
+  id: string;
+  sender: string;
+  content: string;
+  timestamp: string;
+}
+
+export default function MercureDemo() {
+  const [username, setUsername] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [connectionStatus, setConnectionStatus] = useState('Disconnected');
+
+  // API URLs
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+  const mercureUrl = process.env.NEXT_PUBLIC_MERCURE_HUB_URL || 'http://localhost:9090/.well-known/mercure';
+
+  // JWT token
+  const token = 'Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJpYXQiOjE3NDE0NzMyMDYsImV4cCI6MTc0MTQ3NjgwNiwicm9sZXMiOlsiUk9MRV9VU0VSIl0sInVzZXJuYW1lIjoidGVzdDJAdGVzdC5mciJ9.KRFwwDmkLSqSKT17Aw9xFqGDBALVsSGLLNhzUaQvsBsRXOX27GWs1nDHDL4YsSPa-sxqBJpUXGlJgJ7QX56v3UIkjrF53GOW9WYZnyPWC9i2qbrbb_h8lfKbu0mxURkSsKrhxXrPt6n99Dhd3bto5tDFG9xlVvzWM-QnpN_S92FhWMQ3gz3Deb0DsIOw3mw-BGB_s9Ua-ckIYeHYI5syh3m-qC3uSW6MmuuR9qALgDJAMCiv6ftM8JtpOp5f2Et6sWjcBfIEg7dQ_O4N2nNLIH8r-M0ERfAbGAaeEbriip3v1vOvNNskALCebl1QqJr0FuXDoH12B0gxzg7VRdu7Cw';
+
+  // Connect to Mercure
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    setConnectionStatus('Connecting...');
+
+    try {
+      // Create URL with topic
+      const url = new URL(mercureUrl);
+      url.searchParams.append('topic', 'chat/test32');
+
+      console.log(`[${username}] Connecting to Mercure at:`, url.toString());
+
+      // Create EventSource
+      const eventSource = new EventSource(url.toString());
+
+      // Handle connection events
+      eventSource.onopen = () => {
+        console.log(`[${username}] Connected to Mercure`);
+        setConnectionStatus('Connected');
+      };
+
+      eventSource.onerror = () => {
+        console.error(`[${username}] Mercure connection error`);
+        setConnectionStatus('Connection error');
+      };
+
+      // Handle incoming messages
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log(`[${username}] Received message:`, data);
+
+          // Add message to list
+          setMessages(prev => [
+            ...prev,
+            {
+              id: Date.now().toString(),
+              sender: data.sender || 'Anonymous',
+              content: data.message,
+              timestamp: data.timestamp
+            }
+          ]);
+        } catch (err) {
+          console.error(`[${username}] Error parsing message:`, err);
+        }
+      };
+
+      // Cleanup on unmount
+      return () => {
+        eventSource.close();
+        setConnectionStatus('Disconnected');
+      };
+    } catch (error) {
+      console.error(`[${username}] Failed to connect:`, error);
+      setConnectionStatus('Setup failed');
+    }
+  }, [isLoggedIn, username, mercureUrl]);
+
+  // Handle login
+  const handleLogin = (e) => {
+    e.preventDefault();
+    if (!username.trim()) return;
+    setIsLoggedIn(true);
+  };
+
+  // Send a message
+  const sendMessage = async (e) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !isLoggedIn) return;
+
+    try {
+      await axios.post(`${apiUrl}/mercure-test/publish`, {
+        topic: 'chat/test32',
+        message: newMessage,
+        sender: username
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': token
+        }
+      });
+
+      setNewMessage('');
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      alert('Failed to send message');
+    }
+  };
+
+  // Login form
+  if (!isLoggedIn) {
+    return (
+        <div className="max-w-md mx-auto p-4">
+          <h1 className="text-xl font-bold mb-4">Simple Mercure Chat</h1>
+          <form onSubmit={handleLogin}>
+            <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="w-full p-2 border rounded mb-2"
+                placeholder="Enter your username"
+                required
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <button
+                type="submit"
+                className="w-full bg-blue-500 text-white p-2 rounded"
+            >
+              Join Chat
+            </button>
+          </form>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+    );
+  }
+
+  // Chat interface
+  return (
+      <div className="max-w-md mx-auto p-4">
+        <div className="flex justify-between mb-4">
+          <h1 className="text-xl font-bold">Mercure Chat</h1>
+          <div>Status: {connectionStatus}</div>
+        </div>
+
+        <div className="border rounded p-4 h-80 overflow-y-auto mb-4 bg-gray-50">
+          {messages.length === 0 ? (
+              <div className="text-gray-400 text-center">No messages yet</div>
+          ) : (
+              messages.map((msg) => (
+                  <div key={msg.id} className="mb-2 p-2 border-b">
+                    <div className="font-bold text-gray-700">{msg.sender}</div>
+                    <div className="text-gray-600">{msg.content}</div>
+                    <div className="text-xs text-gray-500">
+                      {new Date(msg.timestamp).toLocaleTimeString()}
+                    </div>
+                  </div>
+              ))
+          )}
+        </div>
+
+        <form onSubmit={sendMessage} className="flex gap-2">
+          <input
+              type="text"
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              className="flex-1 p-2 border rounded"
+              placeholder="Type a message..."
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+          <button
+              type="submit"
+              className="bg-blue-500 text-white px-4 py-2 rounded"
+          >
+            Send
+          </button>
+        </form>
+      </div>
   );
 }
