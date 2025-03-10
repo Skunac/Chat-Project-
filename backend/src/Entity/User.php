@@ -10,6 +10,8 @@ use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -52,21 +54,21 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\Column(type: 'uuid', unique: true)]
-    #[Groups(['user:collection:read', 'user:item:read'])]
+    #[Groups(['user:collection:read', 'user:item:read', 'conversation:item:read', 'message:read', 'participant:read'])]
     private ?string $id = null;
 
     #[ORM\Column(type: 'string', length: 180, unique: true)]
-    #[Groups(['user:collection:read', 'user:item:read', 'user:write'])]
+    #[Groups(['user:collection:read', 'user:item:read', 'user:write', 'conversation:item:read', 'message:read', 'participant:read'])]
     #[Assert\NotBlank]
     #[Assert\Email]
     private ?string $email = null;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    #[Groups(['user:collection:read', 'user:item:read', 'user:write', 'user:update'])]
+    #[Groups(['user:collection:read', 'user:item:read', 'user:write', 'user:update', 'conversation:item:read', 'message:read', 'participant:read'])]
     private ?string $displayName = null;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    #[Groups(['user:collection:read', 'user:item:read', 'user:write', 'user:update'])]
+    #[Groups(['user:collection:read', 'user:item:read', 'user:write', 'user:update', 'conversation:item:read', 'message:read', 'participant:read'])]
     private ?string $avatarUrl = null;
 
     #[ORM\Column(type: 'boolean')]
@@ -82,7 +84,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private array $notificationSettings = [];
 
     #[ORM\Column(type: 'datetime', nullable: true)]
-    #[Groups(['user:item:read'])]
+    #[Groups(['user:item:read', 'conversation:item:read'])]
     private ?\DateTimeInterface $lastSeen = null;
 
     #[ORM\Column]
@@ -106,6 +108,21 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['user:item:read', 'user:write', 'user:update'])]
     private ?string $googleId = null;
 
+    #[ORM\OneToMany(targetEntity: Conversation::class, mappedBy: 'creator')]
+    private Collection $createdConversations;
+
+    #[ORM\OneToMany(targetEntity: ConversationParticipant::class, mappedBy: 'user', orphanRemoval: true)]
+    private Collection $conversationParticipations;
+
+    #[ORM\OneToMany(targetEntity: Message::class, mappedBy: 'sender')]
+    private Collection $sentMessages;
+
+    #[ORM\OneToMany(targetEntity: MessageReceipt::class, mappedBy: 'user', orphanRemoval: true)]
+    private Collection $messageReceipts;
+
+    #[ORM\OneToMany(targetEntity: MessageReaction::class, mappedBy: 'user', orphanRemoval: true)]
+    private Collection $messageReactions;
+
     public function __construct()
     {
         $this->id = Uuid::v4()->__toString();
@@ -115,6 +132,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->notificationSettings = [];
         $this->lastSeen = new \DateTime();
         $this->roles = ["ROLE_USER"];
+        $this->createdConversations = new ArrayCollection();
+        $this->conversationParticipations = new ArrayCollection();
+        $this->sentMessages = new ArrayCollection();
+        $this->messageReceipts = new ArrayCollection();
+        $this->messageReactions = new ArrayCollection();
     }
 
     public function getId(): ?string
@@ -172,7 +194,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->displayName;
     }
 
-    public function setDisplayName(string $displayName): static
+    public function setDisplayName(?string $displayName): static
     {
         $this->displayName = $displayName;
         return $this;
@@ -251,6 +273,156 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setGoogleId(?string $googleId): static
     {
         $this->googleId = $googleId;
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Conversation>
+     */
+    public function getCreatedConversations(): Collection
+    {
+        return $this->createdConversations;
+    }
+
+    public function addCreatedConversation(Conversation $conversation): static
+    {
+        if (!$this->createdConversations->contains($conversation)) {
+            $this->createdConversations->add($conversation);
+            $conversation->setCreator($this);
+        }
+
+        return $this;
+    }
+
+    public function removeCreatedConversation(Conversation $conversation): static
+    {
+        if ($this->createdConversations->removeElement($conversation)) {
+            // set the owning side to null (unless already changed)
+            if ($conversation->getCreator() === $this) {
+                $conversation->setCreator(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, ConversationParticipant>
+     */
+    public function getConversationParticipations(): Collection
+    {
+        return $this->conversationParticipations;
+    }
+
+    public function addConversationParticipation(ConversationParticipant $participation): static
+    {
+        if (!$this->conversationParticipations->contains($participation)) {
+            $this->conversationParticipations->add($participation);
+            $participation->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeConversationParticipation(ConversationParticipant $participation): static
+    {
+        if ($this->conversationParticipations->removeElement($participation)) {
+            // set the owning side to null (unless already changed)
+            if ($participation->getUser() === $this) {
+                $participation->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Message>
+     */
+    public function getSentMessages(): Collection
+    {
+        return $this->sentMessages;
+    }
+
+    public function addSentMessage(Message $message): static
+    {
+        if (!$this->sentMessages->contains($message)) {
+            $this->sentMessages->add($message);
+            $message->setSender($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSentMessage(Message $message): static
+    {
+        if ($this->sentMessages->removeElement($message)) {
+            // set the owning side to null (unless already changed)
+            if ($message->getSender() === $this) {
+                $message->setSender(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, MessageReceipt>
+     */
+    public function getMessageReceipts(): Collection
+    {
+        return $this->messageReceipts;
+    }
+
+    public function addMessageReceipt(MessageReceipt $receipt): static
+    {
+        if (!$this->messageReceipts->contains($receipt)) {
+            $this->messageReceipts->add($receipt);
+            $receipt->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeMessageReceipt(MessageReceipt $receipt): static
+    {
+        if ($this->messageReceipts->removeElement($receipt)) {
+            // set the owning side to null (unless already changed)
+            if ($receipt->getUser() === $this) {
+                $receipt->setUser(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, MessageReaction>
+     */
+    public function getMessageReactions(): Collection
+    {
+        return $this->messageReactions;
+    }
+
+    public function addMessageReaction(MessageReaction $reaction): static
+    {
+        if (!$this->messageReactions->contains($reaction)) {
+            $this->messageReactions->add($reaction);
+            $reaction->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeMessageReaction(MessageReaction $reaction): static
+    {
+        if ($this->messageReactions->removeElement($reaction)) {
+            // set the owning side to null (unless already changed)
+            if ($reaction->getUser() === $this) {
+                $reaction->setUser(null);
+            }
+        }
+
         return $this;
     }
 
