@@ -29,7 +29,7 @@ class AuthController extends AbstractController
      * Register a new user account without oauth
      */
     #[Route('/register', name: 'register', methods: ['POST'])]
-    public function register2(#[MapRequestPayload] UserRegistrationDto $dto): JsonResponse
+    public function register(#[MapRequestPayload] UserRegistrationDto $dto): JsonResponse
     {
         try {
             $result = $this->authService->registerUser($dto);
