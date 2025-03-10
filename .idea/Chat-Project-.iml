@@ -169,6 +169,9 @@
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/ralouphie/getallheaders" />
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/symfony/redis-messenger" />
       <excludeFolder url="file://$MODULE_DIR$/backend/vendor/gesdinet/jwt-refresh-token-bundle" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/mark-gerarts/auto-mapper-plus" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/mark-gerarts/automapper-plus-bundle" />
+      <excludeFolder url="file://$MODULE_DIR$/backend/vendor/predis/predis" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

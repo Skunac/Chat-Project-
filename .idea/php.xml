@@ -199,6 +199,9 @@
       <path value="$PROJECT_DIR$/backend/vendor/knpuniversity/oauth2-client-bundle" />
       <path value="$PROJECT_DIR$/backend/vendor/league/oauth2-google" />
       <path value="$PROJECT_DIR$/backend/vendor/gesdinet/jwt-refresh-token-bundle" />
+      <path value="$PROJECT_DIR$/backend/vendor/predis/predis" />
+      <path value="$PROJECT_DIR$/backend/vendor/mark-gerarts/automapper-plus-bundle" />
+      <path value="$PROJECT_DIR$/backend/vendor/mark-gerarts/auto-mapper-plus" />
     </include_path>
   </component>
   <component name="PhpInterpreters">
