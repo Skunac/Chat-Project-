@@ -38,7 +38,8 @@ class AuthService
             throw new \Exception('User already exists');
         }
 
-        $user = $this->userMapper->mapToNewUser($dto);
+        // Use the new mapper method
+        $user = $this->userMapper->mapToUser($dto);
 
         $this->entityManager->persist($user);
         $this->entityManager->flush();

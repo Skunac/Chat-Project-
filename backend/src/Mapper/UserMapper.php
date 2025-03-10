@@ -2,75 +2,93 @@
 
 namespace App\Mapper;
 
+use App\Dto\GoogleUserDto;
 use App\Dto\UserRegistrationDto;
 use App\Entity\User;
+use AutoMapperPlus\AutoMapperInterface;
+use AutoMapperPlus\Configuration\AutoMapperConfigInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
 class UserMapper
 {
     public function __construct(
+        private readonly AutoMapperInterface $mapper,
+        private readonly AutoMapperConfigInterface $config,
         private readonly UserPasswordHasherInterface $passwordHasher
     ) {
+        $this->configureMapper();
     }
 
-    /**
-     * Map DTO to user entity
-     */
-    public function mapToNewUser(UserRegistrationDto $dto): User
+    private function configureMapper(): void
     {
+        // Registration mapping
+        $this->config->registerMapping(UserRegistrationDto::class, User::class)
+            ->forMember('password', function() {
+                return null;
+            });
+
+        // Google user mapping
+        $this->config->registerMapping(GoogleUserDto::class, User::class)
+            ->forMember('avatarUrl', function(GoogleUserDto $source) {
+                return $source->avatarUrl;
+            })
+            ->forMember('googleId', function(GoogleUserDto $source) {
+                return $source->googleId;
+            })
+            ->forMember('isVerified', function(GoogleUserDto $source) {
+                return $source->isVerified;
+            });
+
+        $this->mapper->getConfiguration()->registerMapping(UserRegistrationDto::class, User::class);
+        $this->mapper->getConfiguration()->registerMapping(GoogleUserDto::class, User::class);
+    }
+
+    public function mapToUser(UserRegistrationDto $dto): User
+    {
+        // Create a new User instance
         $user = new User();
 
-        // Map basic fields
-        $user->setEmail($dto->email);
+        // Map properties from DTO to the user
+        $this->mapper->mapToObject($dto, $user);
 
-        // Hash password
-        $user->setPassword($this->passwordHasher->hashPassword($user, $dto->password));
-
-        // Map optional fields
-        if ($dto->displayName) {
-            $user->setDisplayName($dto->displayName);
-        }
-
-        if ($dto->avatarUrl) {
-            $user->setAvatarUrl($dto->avatarUrl);
+        // Hash the password
+        if ($dto->password) {
+            $user->setPassword($this->passwordHasher->hashPassword($user, $dto->password));
         }
 
         return $user;
     }
 
-    /**
-     * Update existing user from DTO
-     */
-    public function updateFromDto(User $user, object $dto): User
+    public function mapGoogleToUser(GoogleUserDto $dto): User
     {
-        // Use reflection to update only properties that exist in both objects
-        $dtoReflection = new \ReflectionObject($dto);
+        // Create a new User instance
+        $user = new User();
 
-        foreach ($dtoReflection->getProperties() as $property) {
-            $propertyName = $property->getName();
+        // Map properties from Google DTO to user
+        $this->mapper->mapToObject($dto, $user);
 
-            // Skip password as it needs special handling
-            if ($propertyName === 'password') {
-                continue;
-            }
+        // Set roles
+        $user->setRoles(['ROLE_USER']);
 
-            // Check if the user has a setter for this property
-            $setterMethod = 'set' . ucfirst($propertyName);
+        return $user;
+    }
 
-            if (method_exists($user, $setterMethod) && $property->isInitialized($dto)) {
-                $value = $property->getValue($dto);
-
-                // Only update if value exists
-                if ($value !== null) {
-                    $user->$setterMethod($value);
-                }
-            }
+    public function updateUserFromGoogle(User $user, GoogleUserDto $dto): User
+    {
+        // Update only specific fields from Google
+        if ($dto->googleId) {
+            $user->setGoogleId($dto->googleId);
         }
 
-        // Handle password separately if it exists and is not empty
-        if (property_exists($dto, 'password') && !empty($dto->password)) {
-            $user->setPassword($this->passwordHasher->hashPassword($user, $dto->password));
+        if ($dto->avatarUrl && !$user->getAvatarUrl()) {
+            $user->setAvatarUrl($dto->avatarUrl);
         }
+
+        if ($dto->displayName && !$user->getDisplayName()) {
+            $user->setDisplayName($dto->displayName);
+        }
+
+        $user->setIsVerified(true);
 
         return $user;
     }
