@@ -51,43 +51,39 @@ class GoogleAuthService
      *
      * @param string $code
      * @return GoogleAuthDto|JsonResponse
+     * @throws \Exception
      */
     public function handleCallback(string $code): GoogleAuthDto|JsonResponse
     {
-        try {
-            $response = $this->httpClient->request('POST', 'https://oauth2.googleapis.com/token', [
-                'body' => [
-                    'client_id' => $_ENV['GOOGLE_CLIENT_ID'],
-                    'client_secret' => $_ENV['GOOGLE_CLIENT_SECRET'],
-                    'code' => $code,
-                    'redirect_uri' => $_ENV['GOOGLE_CALLBACK_URL'],
-                    'grant_type' => 'authorization_code',
-                ],
-            ]);
+        $response = $this->httpClient->request('POST', 'https://oauth2.googleapis.com/token', [
+            'body' => [
+                'client_id' => $_ENV['GOOGLE_CLIENT_ID'],
+                'client_secret' => $_ENV['GOOGLE_CLIENT_SECRET'],
+                'code' => $code,
+                'redirect_uri' => $_ENV['GOOGLE_CALLBACK_URL'],
+                'grant_type' => 'authorization_code',
+            ],
+        ]);
 
-            $data = $response->toArray();
-            if (!isset($data['access_token'])) {
-                return $this->apiResponse->error('Failed to obtain access token');
-            }
-
-            $userInfoResponse = $this->httpClient->request('GET', 'https://www.googleapis.com/oauth2/v3/userinfo', [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $data['access_token'],
-                ],
-            ]);
-
-            $userInfo = $userInfoResponse->toArray();
-
-            return new GoogleAuthDto(
-                $userInfo['sub'],
-                $userInfo['email'],
-                $userInfo['name'] ?? null,
-                $userInfo['picture'] ?? null
-            );
-
-        } catch (\Exception $e) {
-            return $this->apiResponse->serverError('Google authentication failed', $e);
+        $data = $response->toArray();
+        if (!isset($data['access_token'])) {
+            throw new \Exception('Failed to obtain access token');
         }
+
+        $userInfoResponse = $this->httpClient->request('GET', 'https://www.googleapis.com/oauth2/v3/userinfo', [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $data['access_token'],
+            ],
+        ]);
+
+        $userInfo = $userInfoResponse->toArray();
+
+        return new GoogleAuthDto(
+            $userInfo['sub'],
+            $userInfo['email'],
+            $userInfo['name'] ?? null,
+            $userInfo['picture'] ?? null
+        );
     }
 
     /**

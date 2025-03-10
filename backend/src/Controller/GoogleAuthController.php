@@ -2,15 +2,17 @@
 
 namespace App\Controller;
 
+use App\Dto\GoogleCallbackParamsDto;
 use App\Service\ApiResponseService;
 use App\Service\GoogleAuthService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\MapQueryString;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route('/api/auth/google', name: 'api_auth_google_')]
+#[Route('/api/auth/google', name: 'api_auth_google_', format: 'json')]
 class GoogleAuthController extends AbstractController
 {
     public function __construct(
@@ -43,19 +45,10 @@ class GoogleAuthController extends AbstractController
      * Handle Google OAuth callback
      */
     #[Route('/callback', name: 'callback', methods: ['GET'])]
-    public function callback(Request $request): JsonResponse
+    public function callback(#[MapQueryString] GoogleCallbackParamsDto $params): JsonResponse
     {
-        $code = $request->query->get('code');
-        if (!$code) {
-            return $this->apiResponse->error('Authorization code missing', Response::HTTP_BAD_REQUEST);
-        }
-
         try {
-            $googleAuthDto = $this->googleAuthService->handleCallback($code);
-
-            if ($googleAuthDto instanceof JsonResponse) {
-                return $googleAuthDto;
-            }
+            $googleAuthDto = $this->googleAuthService->handleCallback($params->code);
 
             $result = $this->googleAuthService->processGoogleLogin($googleAuthDto);
 

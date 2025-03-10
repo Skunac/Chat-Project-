@@ -7,20 +7,20 @@ use App\Dto\AuthCredentialsDto;
 use App\Entity\User;
 use App\Service\ApiResponseService;
 use App\Service\AuthService;
-use App\Service\DtoFactory;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Attribute\MapQueryString;
+use Symfony\Component\HttpKernel\Attribute\MapRequestPayload;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
 
-#[Route('/api/auth', name: 'api_auth_')]
+#[Route('/api/auth', name: 'api_auth_', format: 'json')]
 class AuthController extends AbstractController
 {
     public function __construct(
         private readonly AuthService $authService,
-        private readonly DtoFactory $dtoFactory,
         private readonly ApiResponseService $apiResponse,
     ) {
     }
@@ -29,23 +29,10 @@ class AuthController extends AbstractController
      * Register a new user account without oauth
      */
     #[Route('/register', name: 'register', methods: ['POST'])]
-    public function register(Request $request): JsonResponse
+    public function register2(#[MapRequestPayload] UserRegistrationDto $dto): JsonResponse
     {
         try {
-            [$dto, $errorResponse] = $this->dtoFactory->createFromRequest(
-                $request,
-                UserRegistrationDto::class
-            );
-
-            if ($errorResponse) {
-                return $errorResponse;
-            }
-
             $result = $this->authService->registerUser($dto);
-
-            if ($result instanceof JsonResponse) {
-                return $result;
-            }
 
             return $this->apiResponse->success(
                 $result,

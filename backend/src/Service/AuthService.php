@@ -35,7 +35,7 @@ class AuthService
     public function registerUser(UserRegistrationDto $dto): array|JsonResponse
     {
         if ($this->userRepository->findOneByEmail($dto->email)) {
-            return $this->apiResponse->conflict('User already exists');
+            throw new \Exception('User already exists');
         }
 
         $user = $this->userMapper->mapToNewUser($dto);
