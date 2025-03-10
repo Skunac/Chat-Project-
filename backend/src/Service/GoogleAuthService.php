@@ -3,13 +3,14 @@
 namespace App\Service;
 
 use App\Dto\GoogleAuthDto;
+use App\Dto\GoogleUserDto;
 use App\Entity\User;
+use App\Mapper\UserMapper;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Gesdinet\JWTRefreshTokenBundle\Generator\RefreshTokenGeneratorInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class GoogleAuthService
@@ -17,13 +18,12 @@ class GoogleAuthService
     public function __construct(
         private readonly UserRepository $userRepository,
         private readonly EntityManagerInterface $entityManager,
-        private readonly UserPasswordHasherInterface $passwordHasher,
         private readonly JWTTokenManagerInterface $jwtManager,
         private readonly HttpClientInterface $httpClient,
         private readonly AuthService $authService,
         private readonly ApiResponseService $apiResponse,
-        private readonly RefreshTokenGeneratorInterface $refreshTokenGenerator
-
+        private readonly RefreshTokenGeneratorInterface $refreshTokenGenerator,
+        private readonly UserMapper $userMapper
     ) {
     }
 
@@ -94,29 +94,33 @@ class GoogleAuthService
      */
     public function processGoogleLogin(GoogleAuthDto $googleAuthDto): array
     {
+        // Create a GoogleUserDto from the GoogleAuthDto
+        $googleUserDto = new GoogleUserDto(
+            $googleAuthDto->email,
+            $googleAuthDto->sub,
+            $googleAuthDto->name,
+            $googleAuthDto->picture
+        );
+
+        // Try to find user by Google ID
         $user = $this->userRepository->findOneBy(['googleId' => $googleAuthDto->sub]);
 
         if (!$user) {
+            // Try to find user by email
             $user = $this->userRepository->findOneByEmail($googleAuthDto->email);
 
             if ($user) {
-                $user->setGoogleId($googleAuthDto->sub);
+                // Update existing user with Google info
+                $this->userMapper->updateUserFromGoogle($user, $googleUserDto);
             }
         }
 
         if (!$user) {
-            $user = new User();
-            $user->setEmail($googleAuthDto->email);
-            $user->setDisplayName($googleAuthDto->name ?? $googleAuthDto->email);
-            $user->setGoogleId($googleAuthDto->sub);
-            $user->setIsVerified(true);
-            $user->setRoles(['ROLE_USER']);
-
-            if ($googleAuthDto->picture) {
-                $user->setAvatarUrl($googleAuthDto->picture);
-            }
+            // Create new user from Google info
+            $user = $this->userMapper->mapGoogleToUser($googleUserDto);
         }
 
+        // Always update last seen timestamp
         $user->setLastSeen(new \DateTime());
 
         $this->entityManager->persist($user);

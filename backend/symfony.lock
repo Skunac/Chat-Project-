@@ -70,6 +70,9 @@
             "config/packages/lexik_jwt_authentication.yaml"
         ]
     },
+    "mark-gerarts/automapper-plus-bundle": {
+        "version": "1.5.0"
+    },
     "nelmio/cors-bundle": {
         "version": "2.5",
         "recipe": {
