@@ -147,4 +147,23 @@ class MessageRepository extends ServiceEntityRepository
 
         return $qb->getQuery()->getResult();
     }
+
+    /**
+     * Find recent messages for a conversation excluding specific IDs
+     */
+    public function findRecentExcluding(Conversation $conversation, array $excludeIds, int $limit = 20): array
+    {
+        $qb = $this->createQueryBuilder('m')
+            ->where('m.conversation = :conversation')
+            ->setParameter('conversation', $conversation)
+            ->orderBy('m.sentAt', 'DESC')
+            ->setMaxResults($limit);
+
+        if (!empty($excludeIds)) {
+            $qb->andWhere('m.id NOT IN (:excludeIds)')
+                ->setParameter('excludeIds', $excludeIds);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
 }
