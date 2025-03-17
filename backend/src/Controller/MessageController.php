@@ -1,5 +1,4 @@
 <?php
-// src/Controller/MessageController.php
 
 namespace App\Controller;
 
