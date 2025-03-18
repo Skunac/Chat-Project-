@@ -103,6 +103,9 @@ class Conversation
     #[ORM\OneToMany(targetEntity: Message::class, mappedBy: 'conversation')]
     private Collection $messages;
 
+    #[ORM\OneToMany(targetEntity: ConversationReceipt::class, mappedBy: 'conversation', orphanRemoval: true)]
+    private Collection $receipts;
+
     public function __construct()
     {
         $this->id = Uuid::v4()->__toString();
@@ -111,6 +114,7 @@ class Conversation
         $this->participants = new ArrayCollection();
         $this->messages = new ArrayCollection();
         $this->settings = [];
+        $this->receipts = new ArrayCollection();
     }
 
     public function getId(): ?string
@@ -252,6 +256,66 @@ class Conversation
         }
 
         return $this;
+    }
+
+    /**
+     * @return Collection<int, ConversationReceipt>
+     */
+    public function getReceipts(): Collection
+    {
+        return $this->receipts;
+    }
+
+    public function getReceiptByUser(User $user): ?ConversationReceipt
+    {
+        foreach ($this->receipts as $receipt) {
+            if ($receipt->getUser() === $user) {
+                return $receipt;
+            }
+        }
+
+        return null;
+    }
+
+    public function addReceipt(ConversationReceipt $receipt): static
+    {
+        if (!$this->receipts->contains($receipt)) {
+            $this->receipts->add($receipt);
+            $receipt->setConversation($this);
+        }
+
+        return $this;
+    }
+
+    public function removeReceipt(ConversationReceipt $receipt): static
+    {
+        if ($this->receipts->removeElement($receipt)) {
+            if ($receipt->getConversation() === $this) {
+                $receipt->setConversation(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getUnreadMessagesCountForUser(User $user): int
+    {
+        $receipt = $this->getReceiptByUser($user);
+        if (!$receipt || !$receipt->getLastReadMessage()) {
+            // All messages are unread
+            return $this->messages->count();
+        }
+
+        $lastReadTimestamp = $receipt->getLastReadMessage()->getSentAt();
+        $unreadCount = 0;
+
+        foreach ($this->messages as $message) {
+            if ($message->getSentAt() > $lastReadTimestamp && $message->getSender() !== $user) {
+                $unreadCount++;
+            }
+        }
+
+        return $unreadCount;
     }
 
     #[ORM\PreUpdate]
