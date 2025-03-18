@@ -9,7 +9,9 @@ use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
+use App\Dto\MessageInput;
 use App\Repository\MessageRepository;
+use App\State\MessageProcessor;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
@@ -21,14 +23,18 @@ use Symfony\Component\Validator\Constraints as Assert;
 #[ApiResource(
     operations: [
         new GetCollection(
-            normalizationContext: ['groups' => ['message:collection:read']]
+            normalizationContext: ['groups' => ['message:collection:read']],
+            security: "is_granted('ROLE_USER')",
         ),
         new Get(
-            normalizationContext: ['groups' => ['message:item:read']]
+            normalizationContext: ['groups' => ['message:item:read']],
+            security: "is_granted('ROLE_USER')",
         ),
         new Post(
             denormalizationContext: ['groups' => ['message:write']],
-            security: "is_granted('MESSAGE_CREATE', object)"
+            security: "is_granted('ROLE_USER')",
+            input: MessageInput::class,
+            processor: MessageProcessor::class
         ),
         new Put(
             denormalizationContext: ['groups' => ['message:update']],
@@ -50,7 +56,6 @@ class Message
 {
     #[ORM\Id]
     #[ORM\Column(type: 'uuid', unique: true)]
-    #[Groups(['message:collection:read', 'message:item:read'])]
     private ?string $id = null;
 
     #[ORM\ManyToOne(targetEntity: Conversation::class, inversedBy: 'messages')]
@@ -88,14 +93,11 @@ class Message
     #[Groups(['message:item:read', 'message:write', 'message:update'])]
     private array $metadata = [];
 
-    #[ORM\OneToMany(mappedBy: 'message', targetEntity: MessageReceipt::class, orphanRemoval: true)]
-    private Collection $receipts;
-
-    #[ORM\OneToMany(mappedBy: 'message', targetEntity: MessageReaction::class, orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: MessageReaction::class, mappedBy: 'message', orphanRemoval: true)]
     #[Groups(['message:item:read'])]
     private Collection $reactions;
 
-    #[ORM\OneToMany(mappedBy: 'message', targetEntity: Attachment::class, orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: Attachment::class, mappedBy: 'message', orphanRemoval: true)]
     #[Groups(['message:item:read'])]
     private Collection $attachments;
 
@@ -203,36 +205,6 @@ class Message
     }
 
     /**
-     * @return Collection<int, MessageReceipt>
-     */
-    public function getReceipts(): Collection
-    {
-        return $this->receipts;
-    }
-
-    public function addReceipt(MessageReceipt $receipt): static
-    {
-        if (!$this->receipts->contains($receipt)) {
-            $this->receipts->add($receipt);
-            $receipt->setMessage($this);
-        }
-
-        return $this;
-    }
-
-    public function removeReceipt(MessageReceipt $receipt): static
-    {
-        if ($this->receipts->removeElement($receipt)) {
-            // set the owning side to null (unless already changed)
-            if ($receipt->getMessage() === $this) {
-                $receipt->setMessage(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
      * @return Collection<int, MessageReaction>
      */
     public function getReactions(): Collection
@@ -290,5 +262,16 @@ class Message
         }
 
         return $this;
+    }
+
+    public function isReadBy(User $user): bool
+    {
+        $receipt = $this->getConversation()->getReceiptByUser($user);
+        if (!$receipt || !$receipt->getLastReadMessage()) {
+            return false;
+        }
+
+        // Compare message IDs or sent timestamps
+        return $this->getSentAt() <= $receipt->getLastReadMessage()->getSentAt();
     }
 }

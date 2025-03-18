@@ -116,8 +116,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Message::class, mappedBy: 'sender')]
     private Collection $sentMessages;
 
-    #[ORM\OneToMany(targetEntity: MessageReceipt::class, mappedBy: 'user', orphanRemoval: true)]
-    private Collection $messageReceipts;
+    #[ORM\OneToMany(targetEntity: ConversationReceipt::class, mappedBy: 'user', orphanRemoval: true)]
+    private Collection $conversationReceipts;
 
     #[ORM\OneToMany(targetEntity: MessageReaction::class, mappedBy: 'user', orphanRemoval: true)]
     private Collection $messageReactions;
@@ -366,26 +366,26 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
-     * @return Collection<int, MessageReceipt>
+     * @return Collection<int, ConversationReceipt>
      */
-    public function getMessageReceipts(): Collection
+    public function getConversationReceipts(): Collection
     {
-        return $this->messageReceipts;
+        return $this->conversationReceipts;
     }
 
-    public function addMessageReceipt(MessageReceipt $receipt): static
+    public function addConversationReceipt(ConversationReceipt $receipt): static
     {
-        if (!$this->messageReceipts->contains($receipt)) {
-            $this->messageReceipts->add($receipt);
+        if (!$this->conversationReceipts->contains($receipt)) {
+            $this->conversationReceipts->add($receipt);
             $receipt->setUser($this);
         }
 
         return $this;
     }
 
-    public function removeMessageReceipt(MessageReceipt $receipt): static
+    public function removeConversationReceipt(ConversationReceipt $receipt): static
     {
-        if ($this->messageReceipts->removeElement($receipt)) {
+        if ($this->conversationReceipts->removeElement($receipt)) {
             // set the owning side to null (unless already changed)
             if ($receipt->getUser() === $this) {
                 $receipt->setUser(null);
