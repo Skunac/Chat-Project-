@@ -88,38 +88,10 @@ class Message
     #[Groups(['message:collection:read', 'message:item:read'])]
     private \DateTimeInterface $sentAt;
 
-    #[ORM\Column(type: 'datetime', nullable: true)]
-    #[Groups(['message:item:read'])]
-    private ?\DateTimeInterface $editedAt = null;
-
-    #[ORM\Column(type: 'boolean')]
-    #[Groups(['message:collection:read', 'message:item:read', 'message:update'])]
-    private bool $isDeleted = false;
-
-    #[ORM\ManyToOne(targetEntity: self::class)]
-    #[Groups(['message:collection:read', 'message:item:read', 'message:write'])]
-    private ?self $parentMessage = null;
-
-    #[ORM\Column(type: 'json')]
-    #[Groups(['message:item:read', 'message:write', 'message:update'])]
-    private array $metadata = [];
-
-    #[ORM\OneToMany(targetEntity: MessageReaction::class, mappedBy: 'message', orphanRemoval: true)]
-    #[Groups(['message:item:read'])]
-    private Collection $reactions;
-
-    #[ORM\OneToMany(targetEntity: Attachment::class, mappedBy: 'message', orphanRemoval: true)]
-    #[Groups(['message:item:read'])]
-    private Collection $attachments;
-
     public function __construct()
     {
         $this->id = Uuid::v4()->__toString();
         $this->sentAt = new \DateTime();
-        $this->receipts = new ArrayCollection();
-        $this->reactions = new ArrayCollection();
-        $this->attachments = new ArrayCollection();
-        $this->metadata = [];
     }
 
     public function getId(): ?string
@@ -169,120 +141,5 @@ class Message
     {
         $this->sentAt = $sentAt;
         return $this;
-    }
-
-    public function getEditedAt(): ?\DateTimeInterface
-    {
-        return $this->editedAt;
-    }
-
-    public function setEditedAt(?\DateTimeInterface $editedAt): static
-    {
-        $this->editedAt = $editedAt;
-        return $this;
-    }
-
-    public function isDeleted(): bool
-    {
-        return $this->isDeleted;
-    }
-
-    public function setIsDeleted(bool $isDeleted): static
-    {
-        $this->isDeleted = $isDeleted;
-        return $this;
-    }
-
-    public function getParentMessage(): ?self
-    {
-        return $this->parentMessage;
-    }
-
-    public function setParentMessage(?self $parentMessage): static
-    {
-        $this->parentMessage = $parentMessage;
-        return $this;
-    }
-
-    public function getMetadata(): array
-    {
-        return $this->metadata;
-    }
-
-    public function setMetadata(array $metadata): static
-    {
-        $this->metadata = $metadata;
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, MessageReaction>
-     */
-    public function getReactions(): Collection
-    {
-        return $this->reactions;
-    }
-
-    public function addReaction(MessageReaction $reaction): static
-    {
-        if (!$this->reactions->contains($reaction)) {
-            $this->reactions->add($reaction);
-            $reaction->setMessage($this);
-        }
-
-        return $this;
-    }
-
-    public function removeReaction(MessageReaction $reaction): static
-    {
-        if ($this->reactions->removeElement($reaction)) {
-            // set the owning side to null (unless already changed)
-            if ($reaction->getMessage() === $this) {
-                $reaction->setMessage(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, Attachment>
-     */
-    public function getAttachments(): Collection
-    {
-        return $this->attachments;
-    }
-
-    public function addAttachment(Attachment $attachment): static
-    {
-        if (!$this->attachments->contains($attachment)) {
-            $this->attachments->add($attachment);
-            $attachment->setMessage($this);
-        }
-
-        return $this;
-    }
-
-    public function removeAttachment(Attachment $attachment): static
-    {
-        if ($this->attachments->removeElement($attachment)) {
-            // set the owning side to null (unless already changed)
-            if ($attachment->getMessage() === $this) {
-                $attachment->setMessage(null);
-            }
-        }
-
-        return $this;
-    }
-
-    public function isReadBy(User $user): bool
-    {
-        $receipt = $this->getConversation()->getReceiptByUser($user);
-        if (!$receipt || !$receipt->getLastReadMessage()) {
-            return false;
-        }
-
-        // Compare message IDs or sent timestamps
-        return $this->getSentAt() <= $receipt->getLastReadMessage()->getSentAt();
     }
 }

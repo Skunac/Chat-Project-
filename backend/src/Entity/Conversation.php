@@ -71,10 +71,6 @@ class Conversation
     #[Assert\Url(message: 'The avatar URL {{ value }} is not a valid URL')]
     private ?string $avatarUrl = null;
 
-    #[ORM\Column(type: 'boolean')]
-    #[Groups(['conversation:collection:read', 'conversation:item:read', 'conversation:write'])]
-    private bool $isGroup = false;
-
     #[ORM\Column(type: 'datetime')]
     #[Groups(['conversation:item:read'])]
     private \DateTimeInterface $createdAt;
@@ -87,14 +83,6 @@ class Conversation
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['conversation:item:read','conversation:write'])]
     private ?User $creator = null;
-
-    #[ORM\Column(type: 'boolean')]
-    #[Groups(['conversation:item:read', 'conversation:write', 'conversation:update'])]
-    private bool $isEncrypted = false;
-
-    #[ORM\Column(type: 'json')]
-    #[Groups(['conversation:item:read', 'conversation:write', 'conversation:update'])]
-    private array $settings = [];
 
     #[ORM\OneToMany(targetEntity: ConversationParticipant::class, mappedBy: 'conversation', orphanRemoval: true)]
     #[Groups(['conversation:item:read'])]
@@ -144,17 +132,6 @@ class Conversation
         return $this;
     }
 
-    public function isGroup(): bool
-    {
-        return $this->isGroup;
-    }
-
-    public function setIsGroup(bool $isGroup): static
-    {
-        $this->isGroup = $isGroup;
-        return $this;
-    }
-
     public function getCreatedAt(): \DateTimeInterface
     {
         return $this->createdAt;
@@ -173,28 +150,6 @@ class Conversation
     public function setCreator(?User $creator): static
     {
         $this->creator = $creator;
-        return $this;
-    }
-
-    public function isEncrypted(): bool
-    {
-        return $this->isEncrypted;
-    }
-
-    public function setIsEncrypted(bool $isEncrypted): static
-    {
-        $this->isEncrypted = $isEncrypted;
-        return $this;
-    }
-
-    public function getSettings(): array
-    {
-        return $this->settings;
-    }
-
-    public function setSettings(array $settings): static
-    {
-        $this->settings = $settings;
         return $this;
     }
 
@@ -256,66 +211,6 @@ class Conversation
         }
 
         return $this;
-    }
-
-    /**
-     * @return Collection<int, ConversationReceipt>
-     */
-    public function getReceipts(): Collection
-    {
-        return $this->receipts;
-    }
-
-    public function getReceiptByUser(User $user): ?ConversationReceipt
-    {
-        foreach ($this->receipts as $receipt) {
-            if ($receipt->getUser() === $user) {
-                return $receipt;
-            }
-        }
-
-        return null;
-    }
-
-    public function addReceipt(ConversationReceipt $receipt): static
-    {
-        if (!$this->receipts->contains($receipt)) {
-            $this->receipts->add($receipt);
-            $receipt->setConversation($this);
-        }
-
-        return $this;
-    }
-
-    public function removeReceipt(ConversationReceipt $receipt): static
-    {
-        if ($this->receipts->removeElement($receipt)) {
-            if ($receipt->getConversation() === $this) {
-                $receipt->setConversation(null);
-            }
-        }
-
-        return $this;
-    }
-
-    public function getUnreadMessagesCountForUser(User $user): int
-    {
-        $receipt = $this->getReceiptByUser($user);
-        if (!$receipt || !$receipt->getLastReadMessage()) {
-            // All messages are unread
-            return $this->messages->count();
-        }
-
-        $lastReadTimestamp = $receipt->getLastReadMessage()->getSentAt();
-        $unreadCount = 0;
-
-        foreach ($this->messages as $message) {
-            if ($message->getSentAt() > $lastReadTimestamp && $message->getSender() !== $user) {
-                $unreadCount++;
-            }
-        }
-
-        return $unreadCount;
     }
 
     #[ORM\PreUpdate]

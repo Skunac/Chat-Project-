@@ -31,9 +31,6 @@ final class ConversationProcessor implements ProcessorInterface
         $conversation = new Conversation();
         $conversation->setName($data->name);
         $conversation->setAvatarUrl($data->avatarUrl);
-        $conversation->setIsGroup($data->isGroup);
-        $conversation->setIsEncrypted($data->isEncrypted);
-        $conversation->setSettings($data->settings);
 
         // Set the current user as the creator
         $currentUser = $this->security->getUser();

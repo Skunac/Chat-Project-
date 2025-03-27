@@ -19,18 +19,6 @@ final class ConversationInput
     #[Groups(['conversation:write'])]
     public ?string $avatarUrl = null;
 
-    #[ApiProperty(description: 'Whether this is a group conversation', example: true)]
-    #[Groups(['conversation:write'])]
-    public bool $isGroup = false;
-
-    #[ApiProperty(description: 'Whether this conversation is encrypted', example: false)]
-    #[Groups(['conversation:write'])]
-    public bool $isEncrypted = false;
-
-    #[ApiProperty(description: 'Additional settings for the conversation', example: '{"theme": "dark"}')]
-    #[Groups(['conversation:write'])]
-    public array $settings = [];
-
     /**
      * List of participant user IDs to add to the conversation
      */

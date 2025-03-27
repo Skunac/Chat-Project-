@@ -7,7 +7,7 @@ use ApiPlatform\State\ProcessorInterface;
 use App\Entity\Message;
 use App\Entity\User;
 use App\Repository\MessageRepository;
-use App\Service\MercurePublisher;
+use App\Service\MercurePublisherService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
@@ -18,7 +18,7 @@ final class MessageProcessor
         private Security $security,
         private EntityManagerInterface $entityManager,
         private ProcessorInterface $persistProcessor,
-        private MercurePublisher $mercurePublisher
+        private MercurePublisherService $mercurePublisher
     ) {
     }
 
