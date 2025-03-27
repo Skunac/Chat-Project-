@@ -91,7 +91,7 @@ final class MessageProcessor
             $topic,
             $publishData,
             $targets,
-            true
+            false
         );
     }
 }

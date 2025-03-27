@@ -63,7 +63,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $email = null;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
-    #[Groups(['user:collection:read', 'user:item:read', 'user:write', 'user:update', 'conversation:item:read', 'message:read', 'participant:read'])]
+    #[Groups(['user:collection:read', 'user:item:read', 'user:write', 'user:update', 'conversation:item:read', 'message:read', 'participant:read', 'message:collection:read'])]
     private ?string $displayName = null;
 
     #[ORM\Column(type: 'string', length: 255, nullable: true)]
