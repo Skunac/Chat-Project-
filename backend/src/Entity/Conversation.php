@@ -91,9 +91,6 @@ class Conversation
     #[ORM\OneToMany(targetEntity: Message::class, mappedBy: 'conversation')]
     private Collection $messages;
 
-    #[ORM\OneToMany(targetEntity: ConversationReceipt::class, mappedBy: 'conversation', orphanRemoval: true)]
-    private Collection $receipts;
-
     public function __construct()
     {
         $this->id = Uuid::v4()->__toString();
@@ -101,8 +98,6 @@ class Conversation
         $this->updatedAt = new \DateTime();
         $this->participants = new ArrayCollection();
         $this->messages = new ArrayCollection();
-        $this->settings = [];
-        $this->receipts = new ArrayCollection();
     }
 
     public function getId(): ?string
