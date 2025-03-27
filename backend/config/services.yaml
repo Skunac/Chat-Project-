@@ -30,5 +30,16 @@ services:
             $persistProcessor: '@api_platform.doctrine.orm.state.persist_processor'
         tags: ['api_platform.state_processor']
 
+    App\State\ConversationMessageProvider:
+        tags: [ 'api_platform.state_provider' ]
+        arguments:
+            $conversationRepository: '@App\Repository\ConversationRepository'
+            $messageRepository: '@App\Repository\MessageRepository'
+            $security: '@Symfony\Bundle\SecurityBundle\Security'
+
+    App\EventListener\JWTCreatedListener:
+        tags:
+            - { name: kernel.event_subscriber }
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

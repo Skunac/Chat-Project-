@@ -6,9 +6,11 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Delete;
 use ApiPlatform\Metadata\Get;
 use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Link;
 use ApiPlatform\Metadata\Patch;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
+use ApiPlatform\OpenApi\OpenApi;
 use App\Dto\MessageInput;
 use App\Repository\MessageRepository;
 use App\State\MessageProcessor;
@@ -19,12 +21,21 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Serializer\Annotation\Groups;
 use Symfony\Component\Uid\Uuid;
 use Symfony\Component\Validator\Constraints as Assert;
+use App\State\ConversationMessageProvider;
+use ApiPlatform\OpenApi\Model\Parameter;
 
 #[ApiResource(
     operations: [
         new GetCollection(
             normalizationContext: ['groups' => ['message:collection:read']],
             security: "is_granted('ROLE_USER')",
+        ),
+        new GetCollection(
+            uriTemplate: '/conversations/{id}/messages',
+            uriVariables: ['id' => new Link(fromProperty: 'id', fromClass: Conversation::class)],
+            normalizationContext: ['groups' => ['message:collection:read']],
+            security: "is_granted('ROLE_USER')",
+            provider: ConversationMessageProvider::class
         ),
         new Get(
             normalizationContext: ['groups' => ['message:item:read']],

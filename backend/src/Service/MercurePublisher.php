@@ -35,12 +35,9 @@ class MercurePublisher
 
 
         $update = new Update(
-            $topic,      // Topic (can be string or array of strings)
-            $json,       // Data (JSON string)
-            $private,    // Private flag
-            null,        // ID (optional)
-            null,        // Type (optional) - NOT $targets!
-            null         // Retry (optional)
+            $topic,
+            $json,
+            $private
         );
 
         // Publish the update
