@@ -116,12 +116,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Message::class, mappedBy: 'sender')]
     private Collection $sentMessages;
 
-    #[ORM\OneToMany(targetEntity: ConversationReceipt::class, mappedBy: 'user', orphanRemoval: true)]
-    private Collection $conversationReceipts;
-
-    #[ORM\OneToMany(targetEntity: MessageReaction::class, mappedBy: 'user', orphanRemoval: true)]
-    private Collection $messageReactions;
-
     public function __construct()
     {
         $this->id = Uuid::v4()->__toString();
@@ -134,8 +128,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->createdConversations = new ArrayCollection();
         $this->conversationParticipations = new ArrayCollection();
         $this->sentMessages = new ArrayCollection();
-        $this->messageReceipts = new ArrayCollection();
-        $this->messageReactions = new ArrayCollection();
     }
 
     public function getId(): ?string
@@ -359,66 +351,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
             // set the owning side to null (unless already changed)
             if ($message->getSender() === $this) {
                 $message->setSender(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, ConversationReceipt>
-     */
-    public function getConversationReceipts(): Collection
-    {
-        return $this->conversationReceipts;
-    }
-
-    public function addConversationReceipt(ConversationReceipt $receipt): static
-    {
-        if (!$this->conversationReceipts->contains($receipt)) {
-            $this->conversationReceipts->add($receipt);
-            $receipt->setUser($this);
-        }
-
-        return $this;
-    }
-
-    public function removeConversationReceipt(ConversationReceipt $receipt): static
-    {
-        if ($this->conversationReceipts->removeElement($receipt)) {
-            // set the owning side to null (unless already changed)
-            if ($receipt->getUser() === $this) {
-                $receipt->setUser(null);
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return Collection<int, MessageReaction>
-     */
-    public function getMessageReactions(): Collection
-    {
-        return $this->messageReactions;
-    }
-
-    public function addMessageReaction(MessageReaction $reaction): static
-    {
-        if (!$this->messageReactions->contains($reaction)) {
-            $this->messageReactions->add($reaction);
-            $reaction->setUser($this);
-        }
-
-        return $this;
-    }
-
-    public function removeMessageReaction(MessageReaction $reaction): static
-    {
-        if ($this->messageReactions->removeElement($reaction)) {
-            // set the owning side to null (unless already changed)
-            if ($reaction->getUser() === $this) {
-                $reaction->setUser(null);
             }
         }
 
