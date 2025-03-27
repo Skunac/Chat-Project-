@@ -6,7 +6,7 @@ use Symfony\Component\Mercure\HubInterface;
 use Symfony\Component\Mercure\Update;
 use Symfony\Component\Serializer\SerializerInterface;
 
-class MercurePublisher
+class MercurePublisherService
 {
     private HubInterface $hub;
     private SerializerInterface $serializer;
