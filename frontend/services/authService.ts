@@ -1,10 +1,9 @@
-import { axiosInstance } from "@/config/axios";
-import { User } from "@/types/user";
+import { axiosInstance } from '@/config/axios';
+import { User } from '@/types/user';
 
-export interface AuthResponse {
+export interface TokenResponse {
     token: string;
-    refreshToken?: string;
-    user: User;
+    refresh_token?: string;
 }
 
 export interface LoginCredentials {
@@ -16,52 +15,60 @@ export interface RegisterCredentials {
     email: string;
     password: string;
     displayName?: string;
+    avatarUrl?: string;
 }
 
+/**
+ * Service for handling authentication-related API calls
+ */
 class AuthService {
     /**
-     * Get the current authenticated user
+     * Get the current authenticated user's data
      */
     async getCurrentUser(): Promise<User> {
-        const response = await axiosInstance.get("/auth/me");
+        const response = await axiosInstance.get('/auth/me');
         return response.data.data;
     }
 
     /**
-     * Log in a user with email and password
+     * Login with email and password
+     * Only returns tokens, not user data
      */
-    async login(credentials: LoginCredentials): Promise<AuthResponse> {
-        const response = await axiosInstance.post("/auth/login", credentials);
-        return response.data;
+    async login(credentials: LoginCredentials): Promise<TokenResponse> {
+        const response = await axiosInstance.post('/auth/login', credentials);
+
+        return {
+            token: response.data.token,
+            refresh_token: response.data.refresh_token
+        };
     }
 
     /**
      * Register a new user
+     * Only returns tokens, not user data
      */
-    async register(credentials: RegisterCredentials): Promise<AuthResponse> {
-        const response = await axiosInstance.post("/auth/register", credentials);
-        return response.data;
+    async register(userData: RegisterCredentials): Promise<TokenResponse> {
+        const response = await axiosInstance.post('/auth/register', userData);
+
+        return {
+            token: response.data.data.token,
+            refresh_token: response.data.data.refresh_token
+        };
     }
 
     /**
      * Refresh the authentication token
      */
-    async refreshToken(): Promise<AuthResponse> {
-        const response = await axiosInstance.post("/auth/refresh");
-        return response.data;
-    }
+    async refreshToken(refreshToken: string): Promise<TokenResponse> {
+        const response = await axiosInstance.post('/auth/refresh', { refresh_token: refreshToken });
 
-    /**
-     * Log out the current user
-     */
-    async logout(): Promise<void> {
-        await axiosInstance.post("/auth/logout");
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
+        return {
+            token: response.data.token,
+            refresh_token: response.data.refresh_token
+        };
     }
 }
 
-// Create a singleton instance
+// Create and export a singleton instance
 const authService = new AuthService();
-
 export default authService;

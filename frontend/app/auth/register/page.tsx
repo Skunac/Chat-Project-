@@ -101,11 +101,7 @@ export default function Register() {
             const validatedData = registerSchema.parse(formData);
 
             // Call register from auth service
-            const response = await auth.register(
-                validatedData.email,
-                validatedData.password,
-                validatedData.displayName
-            );
+            const response = await auth.register(validatedData);
 
             router.push("/");
 

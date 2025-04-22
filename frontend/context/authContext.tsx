@@ -1,107 +1,250 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
-import { User } from "@/types/user";
-import authService, {AuthResponse} from "@/services/authService";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { User } from '@/types/user';
+import authService, { LoginCredentials, RegisterCredentials } from '@/services/authService';
+import { useRouter } from 'next/navigation';
 
-type AuthContextType = {
+type AuthState = {
     user: User | null;
+    loadingInitial: boolean;
+    validating: boolean;
     loading: boolean;
     error: string | null;
-    login: (email: string, password: string) => Promise<AuthResponse>;
-    register: (email: string, password: string, displayName?: string) => Promise<AuthResponse>;
+};
+
+type AuthContextType = AuthState & {
+    login: (credentials: LoginCredentials) => Promise<void>;
+    register: (userData: RegisterCredentials) => Promise<void>;
     logout: () => Promise<void>;
+    refreshUserData: () => Promise<User | null>;
+    clearError: () => void;
+    isAuthenticated: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-    const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+const STORAGE_KEYS = {
+    USER: 'user',
+    ACCESS_TOKEN: 'accessToken',
+    REFRESH_TOKEN: 'refreshToken',
+};
+
+const getFromStorage = (key: string) => {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem(key);
+};
+
+const setInStorage = (key: string, value: string) => {
+    if (typeof window === 'undefined') return;
+    localStorage.setItem(key, value);
+};
+
+const removeFromStorage = (key: string) => {
+    if (typeof window === 'undefined') return;
+    localStorage.removeItem(key);
+};
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+    const [state, setState] = useState<AuthState>({
+        user: null,
+        loadingInitial: true,
+        validating: false,
+        loading: false,
+        error: null,
+    });
+    const router = useRouter();
 
     useEffect(() => {
-        const checkAuthStatus = async () => {
+        const initializeAuth = async () => {
             try {
-                setLoading(true);
-                const userData = await authService.getCurrentUser();
-                setUser(userData);
-            } catch (err) {
-                localStorage.removeItem("accessToken");
-                localStorage.removeItem("refreshToken");
-            } finally {
-                setLoading(false);
+                if (typeof window === 'undefined') return;
+
+                const storedUser = getFromStorage(STORAGE_KEYS.USER);
+                const accessToken = getFromStorage(STORAGE_KEYS.ACCESS_TOKEN);
+
+                let parsedUser: User | null = null;
+                if (storedUser) {
+                    try {
+                        parsedUser = JSON.parse(storedUser);
+
+                        setState(prev => ({
+                            ...prev,
+                            user: parsedUser,
+                            loadingInitial: false,
+                            validating: true,
+                        }));
+                    } catch (e) {
+                        console.error('Failed to parse stored user data:', e);
+                        setState(prev => ({ ...prev, loadingInitial: false }));
+                    }
+                } else {
+                    setState(prev => ({ ...prev, loadingInitial: false }));
+                }
+
+                if (accessToken) {
+                    try {
+                        const freshUserData = await authService.getCurrentUser();
+
+                        setInStorage(STORAGE_KEYS.USER, JSON.stringify(freshUserData));
+
+                        setState(prev => ({
+                            ...prev,
+                            user: freshUserData,
+                            validating: false,
+                        }));
+                    } catch (error) {
+                        console.error('Failed to validate user data:', error);
+
+                        setState(prev => ({ ...prev, validating: false }));
+                    }
+                }
+            } catch (error) {
+                console.error('Auth initialization error:', error);
+                setState(prev => ({
+                    ...prev,
+                    loadingInitial: false,
+                    validating: false,
+                }));
             }
         };
 
-        checkAuthStatus();
+        initializeAuth();
     }, []);
 
-    const login = async (email: string, password: string) => {
+    const refreshUserData = async (): Promise<User | null> => {
         try {
-            setLoading(true);
-            setError(null);
+            const accessToken = getFromStorage(STORAGE_KEYS.ACCESS_TOKEN);
+            if (!accessToken) return null;
 
-            const response = await authService.login({ email, password });
-            setUser(response.user);
+            setState(prev => ({ ...prev, loading: true }));
 
-            return response;
-        } catch (err: any) {
-            setError(err.response?.data?.message || "Failed to login");
-            throw err;
-        } finally {
-            setLoading(false);
+            const userData = await authService.getCurrentUser();
+
+            setInStorage(STORAGE_KEYS.USER, JSON.stringify(userData));
+
+            setState(prev => ({
+                ...prev,
+                user: userData,
+                loading: false,
+                error: null
+            }));
+
+            return userData;
+        } catch (error) {
+            console.error('Failed to refresh user data:', error);
+            setState(prev => ({ ...prev, loading: false }));
+
+            return null;
         }
     };
 
-    const register = async (email: string, password: string, displayName?: string) => {
+    const clearAuthState = () => {
+        removeFromStorage(STORAGE_KEYS.USER);
+        removeFromStorage(STORAGE_KEYS.ACCESS_TOKEN);
+        removeFromStorage(STORAGE_KEYS.REFRESH_TOKEN);
+
+        setState(prev => ({
+            ...prev,
+            user: null,
+            loading: false,
+            error: null,
+        }));
+    };
+
+    const handleLogin = async (credentials: LoginCredentials): Promise<void> => {
         try {
-            setLoading(true);
-            setError(null);
+            setState(prev => ({ ...prev, loading: true, error: null }));
 
-            const response = await authService.register({
-                email,
-                password,
-                displayName
-            });
+            const response = await authService.login(credentials);
 
-            return response;
-        } catch (err: any) {
-            setError(err.response?.data?.message || "Registration failed");
-            throw err;
-        } finally {
-            setLoading(false);
+            setInStorage(STORAGE_KEYS.ACCESS_TOKEN, response.token);
+            if (response.refresh_token) {
+                setInStorage(STORAGE_KEYS.REFRESH_TOKEN, response.refresh_token);
+            }
+
+            const userData = await refreshUserData();
+
+            if (!userData) {
+                throw new Error('Failed to get user data after login');
+            }
+
+            router.push('/');
+        } catch (error: any) {
+            console.error('Login error:', error);
+            setState(prev => ({
+                ...prev,
+                error: error?.response?.data?.message || 'Login failed. Please try again.',
+                loading: false
+            }));
+            throw error;
         }
     };
 
-    const logout = async () => {
+    const handleRegister = async (userData: RegisterCredentials): Promise<void> => {
         try {
-            setLoading(true);
-            await authService.logout();
-            setUser(null);
-        } catch (err) {
-            console.error("Logout failed:", err);
-        } finally {
-            setLoading(false);
+            setState(prev => ({ ...prev, loading: true, error: null }));
+
+            const response = await authService.register(userData);
+
+            setInStorage(STORAGE_KEYS.ACCESS_TOKEN, response.token);
+            if (response.refresh_token) {
+                setInStorage(STORAGE_KEYS.REFRESH_TOKEN, response.refresh_token);
+            }
+
+            const userProfile = await refreshUserData();
+
+            if (!userProfile) {
+                throw new Error('Failed to get user data after registration');
+            }
+
+            router.push('/');
+        } catch (error: any) {
+            console.error('Registration error:', error);
+            setState(prev => ({
+                ...prev,
+                error: error?.response?.data?.message || 'Registration failed. Please try again.',
+                loading: false
+            }));
+            throw error;
         }
     };
+
+    const handleLogout = async (): Promise<void> => {
+        try {
+            setState(prev => ({ ...prev, loading: true }));
+        } finally {
+            clearAuthState();
+        }
+    };
+
+    const clearError = () => {
+        setState(prev => ({ ...prev, error: null }));
+    };
+
+    const getToken = (): string | null => {
+        return getFromStorage(STORAGE_KEYS.ACCESS_TOKEN);
+    };
+
+    const isAuthenticated = !!state.user && !!getToken();
 
     const value = {
-        user,
-        loading,
-        error,
-        login,
-        register,
-        logout
+        ...state,
+        login: handleLogin,
+        register: handleRegister,
+        logout: handleLogout,
+        refreshUserData,
+        clearError,
+        isAuthenticated,
     };
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
+};
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
     if (context === undefined) {
-        throw new Error("useAuth must be used within an AuthProvider");
+        throw new Error('useAuth must be used within an AuthProvider');
     }
     return context;
 };
