@@ -34,10 +34,8 @@ class JWTCreatedListener implements EventSubscriberInterface
         $subscriptions = [];
 
         foreach ($user->getConversationParticipations() as $participant) {
-            if ($participant->getLeftAt() === null) {
-                $conversationId = $participant->getConversation()->getId();
-                $subscriptions[] = 'conversation/' . $conversationId;
-            }
+            $conversationId = $participant->getConversation()->getId();
+            $subscriptions[] = 'conversation/' . $conversationId;
         }
 
         $payload['mercure'] = [
