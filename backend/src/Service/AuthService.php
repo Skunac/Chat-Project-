@@ -6,6 +6,7 @@ use App\Dto\AuthCredentialsDto;
 use App\Dto\UserRegistrationDto;
 use App\Entity\User;
 use App\Mapper\UserMapper;
+use App\Repository\MessageRepository;
 use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Gesdinet\JWTRefreshTokenBundle\Generator\RefreshTokenGeneratorInterface;
@@ -22,7 +23,8 @@ class AuthService
         private readonly UserRepository $userRepository,
         private readonly UserMapper $userMapper,
         private readonly ApiResponseService $apiResponse,
-        private readonly RefreshTokenGeneratorInterface $refreshTokenGenerator
+        private readonly RefreshTokenGeneratorInterface $refreshTokenGenerator,
+        private readonly MessageRepository $messageRepository
     ) {
     }
 
@@ -87,6 +89,36 @@ class AuthService
      */
     public function getUserData(User $user): array
     {
+        $conversations = [];
+
+        foreach ($user->getConversationParticipations() as $participation) {
+            $conversation = $participation->getConversation();
+
+            if ($conversation) {
+                $lastMessage = $this->messageRepository->getLastMessageOfConversation($conversation);
+
+                $conversationData = [
+                    'id' => $conversation->getId(),
+                    'name' => $conversation->getName(),
+                    'avatarUrl' => $conversation->getAvatarUrl(),
+                    'createdAt' => $conversation->getCreatedAt()->format('c'),
+                    'updatedAt' => $conversation->getUpdatedAt()->format('c'),
+                    'role' => $participation->getRole(),
+                    'lastMessage' => null
+                ];
+
+                if ($lastMessage) {
+                    $conversationData['lastMessage'] = [
+                        'content' => $lastMessage->getContent(),
+                        'senderName' => $lastMessage->getSender()->getDisplayName(),
+                        'sentAt' => $lastMessage->getSentAt()->format('c'),
+                    ];
+                }
+
+                $conversations[] = $conversationData;
+            }
+        }
+
         return [
             'id' => $user->getId(),
             'email' => $user->getEmail(),
@@ -95,6 +127,7 @@ class AuthService
             'roles' => $user->getRoles(),
             'isVerified' => $user->isVerified(),
             'lastSeen' => $user->getLastSeen()?->format('c'),
+            'conversations' => $conversations
         ];
     }
 

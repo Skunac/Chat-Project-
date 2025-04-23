@@ -22,37 +22,12 @@ export default function Sidebar() {
     const { user, loadingInitial, validating, loading, logout, refreshUserData } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
 
-    // Mock conversation data for demonstration
-    const conversations = [
-        {
-            id: '1',
-            name: 'General Chat',
-            lastMessage: 'Latest project updates',
-            unreadCount: 3,
-            isGroup: true
-        },
-        {
-            id: '2',
-            name: 'Sarah Johnson',
-            lastMessage: 'Are you available for a call?',
-            unreadCount: 0,
-            isGroup: false
-        },
-        {
-            id: '3',
-            name: 'Development Team',
-            lastMessage: 'New release scheduled for Friday',
-            unreadCount: 5,
-            isGroup: true
-        }
-    ];
-
     // Filter conversations based on search query
-    const filteredConversations = searchQuery
-        ? conversations.filter(
+    const filteredConversations = user?.conversations
+        ? user.conversations.filter(
             conversation => conversation.name.toLowerCase().includes(searchQuery.toLowerCase())
         )
-        : conversations;
+        : [];
 
     const handleLogout = async () => {
         try {
@@ -68,6 +43,27 @@ export default function Sidebar() {
         } catch (error) {
             console.error('Failed to refresh user data:', error);
         }
+    };
+
+    // Format timestamp for messages
+    const formatMessageTime = (timestamp: string) => {
+        const date = new Date(timestamp);
+        const now = new Date();
+
+        // Check if the message is from today
+        if (date.toDateString() === now.toDateString()) {
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Check if the message is from yesterday
+        const yesterday = new Date(now);
+        yesterday.setDate(now.getDate() - 1);
+        if (date.toDateString() === yesterday.toDateString()) {
+            return 'Yesterday';
+        }
+
+        // Otherwise return the date
+        return date.toLocaleDateString();
     };
 
     // Show loading state for initial load
@@ -194,7 +190,7 @@ export default function Sidebar() {
                             </Button>
                         </div>
 
-                        {filteredConversations.length > 0 ? (
+                        {user.conversations && user.conversations.length > 0 ? (
                             <div className="space-y-1">
                                 {filteredConversations.map(conversation => (
                                     <div
@@ -203,10 +199,9 @@ export default function Sidebar() {
                                     >
                                         <Avatar
                                             size="sm"
+                                            src={conversation.avatarUrl || undefined}
                                             fallback={
-                                                conversation.isGroup
-                                                    ? <LuUsers className="h-4 w-4" />
-                                                    : conversation.name[0]
+                                                conversation.name?.[0] || <LuUsers className="h-4 w-4" />
                                             }
                                         />
 
@@ -215,15 +210,25 @@ export default function Sidebar() {
                                                 <p className="text-sm font-medium truncate">
                                                     {conversation.name}
                                                 </p>
-                                                {conversation.unreadCount > 0 && (
-                                                    <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-medium bg-primary text-white rounded-full">
-                            {conversation.unreadCount}
+                                                {conversation.lastMessage && (
+                                                    <span className="text-xs text-default-400">
+                            {formatMessageTime(conversation.lastMessage.sentAt)}
                           </span>
                                                 )}
                                             </div>
-                                            <p className="text-xs text-default-500 truncate">
-                                                {conversation.lastMessage}
-                                            </p>
+                                            <div className="flex items-center gap-1">
+                                                {conversation.role === 'ADMIN' && (
+                                                    <span className="text-[0.65rem] bg-primary/10 text-primary px-1 rounded">
+                            Admin
+                          </span>
+                                                )}
+                                                <p className="text-xs text-default-500 truncate">
+                                                    {conversation.lastMessage
+                                                        ? `${conversation.lastMessage.senderName}: ${conversation.lastMessage.content}`
+                                                        : 'No messages yet'
+                                                    }
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                 ))}

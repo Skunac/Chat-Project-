@@ -1,3 +1,5 @@
+import {ConversationPreview} from "@/types/conversation";
+
 export interface User {
     id: string;
     email: string;
@@ -6,4 +8,5 @@ export interface User {
     roles: string[];
     isVerified: boolean;
     lastSeen: Date;
+    conversations: ConversationPreview[] | null;
 }
