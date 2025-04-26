@@ -1,9 +1,7 @@
-export interface Message {
-
-}
+export interface Message {}
 
 export interface MessagePreview {
-    content: string;
-    senderName: string;
-    sentAt: string;
+  content: string;
+  senderName: string;
+  sentAt: string;
 }
