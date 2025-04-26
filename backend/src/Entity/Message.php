@@ -67,6 +67,7 @@ class Message
 {
     #[ORM\Id]
     #[ORM\Column(type: 'uuid', unique: true)]
+    #[Groups(['message:collection:read', 'message:item:read'])]
     private ?string $id = null;
 
     #[ORM\ManyToOne(targetEntity: Conversation::class, inversedBy: 'messages')]

@@ -12,11 +12,10 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\SecurityBundle\Security;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 
-final class MessageProcessor
+final class MessageProcessor implements ProcessorInterface
 {
     public function __construct(
         private Security $security,
-        private EntityManagerInterface $entityManager,
         private ProcessorInterface $persistProcessor,
         private MercurePublisherService $mercurePublisher
     ) {
@@ -36,24 +35,13 @@ final class MessageProcessor
         }
         $message->setSender($currentUser);
 
-        if ($data->parentMessage) {
-            $parentMessage = $this->entityManager->getRepository(Message::class)->find($data->parentMessage);
-            if (!$parentMessage) {
-                throw new BadRequestHttpException('Parent message not found');
-            }
-            $message->setParentMessage($parentMessage);
-        }
+        // Persist with the standard processor
+        $persistedMessage = $this->persistProcessor->process($message, $operation, $uriVariables, $context);
 
-        if ($data->metadata) {
-            $message->setMetadata($data->metadata);
-        }
+        // Now publish to Mercure after it's been persisted
+        $this->publishToMercure($persistedMessage);
 
-        $this->entityManager->persist($message);
-        $this->entityManager->flush();
-
-        $this->publishToMercure($message);
-
-        return $message;
+        return $persistedMessage;
     }
 
     private function publishToMercure(Message $message): void
@@ -71,22 +59,13 @@ final class MessageProcessor
             'conversationId' => $message->getConversation()->getId(),
         ];
 
-        if ($message->getParentMessage()) {
-            $publishData['parentMessageId'] = $message->getParentMessage()->getId();
-        }
-
-        if (!empty($message->getMetadata())) {
-            $publishData['metadata'] = $message->getMetadata();
-        }
-
-
+        // Build targets array
         $targets = [];
         foreach ($message->getConversation()->getParticipants() as $participant) {
-            if ($participant->getLeftAt() === null) {
-                $targets[] = 'user/' . $participant->getUser()->getId();
-            }
+            $targets[] = 'user/' . $participant->getUser()->getId();
         }
 
+        // Publish to Mercure
         $this->mercurePublisher->publish(
             $topic,
             $publishData,

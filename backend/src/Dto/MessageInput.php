@@ -18,12 +18,4 @@ final class MessageInput
     #[Assert\NotBlank(message: 'Message content cannot be blank')]
     #[Groups(['message:write'])]
     public string $content;
-
-    #[ApiProperty(description: 'Parent message for this message', example: '/api/messages/c5806c83-3f04-4486-a112-645066194641')]
-    #[Groups(['message:write'])]
-    public ?Message $parentMessage = null;
-
-    #[ApiProperty(description: 'Metadata for the message', example: '{"type": "text"}')]
-    #[Groups(['message:write'])]
-    public ?array $metadata = null;
 }

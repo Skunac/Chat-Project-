@@ -158,10 +158,10 @@ export default function Register() {
 
         <div className="p-6">
           <Button
-            variant="bordered"
             className="w-full flex items-center justify-center gap-2 py-4 text-lg hover:bg-background/90 transition-all"
-            onClick={() => console.log("Google sign up")}
             type="button"
+            variant="bordered"
+            onClick={() => console.log("Google sign up")}
           >
             <FcGoogle className="text-xl" />
             Sign up with Google
@@ -184,25 +184,25 @@ export default function Register() {
             <div className="space-y-4">
               <div className="space-y-1">
                 <label
-                  htmlFor="email"
                   className="flex items-center gap-1 text-sm font-medium"
+                  htmlFor="email"
                 >
                   <MdAlternateEmail className="text-primary" />
                   Email
                 </label>
                 <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  placeholder="name@example.com"
                   required
-                  value={formData.email}
-                  onChange={handleChange}
-                  className={`py-4 ${getErrorMessage("email") ? "border-red-500" : ""}`}
-                  aria-invalid={!!getErrorMessage("email")}
                   aria-describedby={
                     getErrorMessage("email") ? "email-error" : undefined
                   }
+                  aria-invalid={!!getErrorMessage("email")}
+                  className={`py-4 ${getErrorMessage("email") ? "border-red-500" : ""}`}
+                  id="email"
+                  name="email"
+                  placeholder="name@example.com"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
                 />
                 {getErrorMessage("email") && (
                   <p className="text-sm text-red-500 mt-1" id="email-error">
@@ -213,24 +213,24 @@ export default function Register() {
 
               <div className="space-y-1">
                 <label
-                  htmlFor="password"
                   className="flex items-center gap-1 text-sm font-medium"
+                  htmlFor="password"
                 >
                   <RiLockPasswordLine className="text-primary" />
                   Password
                 </label>
                 <Input
-                  id="password"
-                  name="password"
-                  type="password"
                   required
-                  value={formData.password}
-                  onChange={handleChange}
-                  className={`py-4 ${getErrorMessage("password") ? "border-red-500" : ""}`}
-                  aria-invalid={!!getErrorMessage("password")}
                   aria-describedby={
                     getErrorMessage("password") ? "password-error" : undefined
                   }
+                  aria-invalid={!!getErrorMessage("password")}
+                  className={`py-4 ${getErrorMessage("password") ? "border-red-500" : ""}`}
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={handleChange}
                 />
                 {getErrorMessage("password") && (
                   <p className="text-sm text-red-500 mt-1" id="password-error">
@@ -241,28 +241,31 @@ export default function Register() {
 
               <div className="space-y-1">
                 <label
-                  htmlFor="confirmPassword"
                   className="flex items-center gap-1 text-sm font-medium"
+                  htmlFor="confirmPassword"
                 >
                   <RiLockPasswordLine className="text-primary" />
                   Confirm Password
                 </label>
                 <Input
                   required
-                                    aria-describedby={getErrorMessage("confirmPassword") ? "confirmPassword-error" : undefined}
-                                    aria-invalid={!!getErrorMessage("confirmPassword")}
-                                    className={`py-4 ${getErrorMessage("confirmPassword") ? "border-red-500" : ""}`}
-                                    id="confirmPassword"
-                                    name="confirmPassword"
-                                    type="password"
-                                    value={formData.confirmPassword}
-                                    onChange={handleChange}
-                                />
+                  aria-describedby={
+                    getErrorMessage("confirmPassword")
+                      ? "confirmPassword-error"
+                      : undefined
+                  }
+                  aria-invalid={!!getErrorMessage("confirmPassword")}
+                  className={`py-4 ${getErrorMessage("confirmPassword") ? "border-red-500" : ""}`}
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  type="password"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
                 />
                 {getErrorMessage("confirmPassword") && (
                   <p
-                    id="confirmPassword-error"
                     className="text-sm text-red-500 mt-1"
+                    id="confirmPassword-error"
                   >
                     {getErrorMessage("confirmPassword")}
                   </p>
@@ -271,8 +274,8 @@ export default function Register() {
 
               <div className="space-y-1">
                 <label
-                  htmlFor="displayName"
                   className="flex items-center gap-1 text-sm font-medium"
+                  htmlFor="displayName"
                 >
                   <RiUserLine className="text-primary" />
                   Display Name{" "}
@@ -281,22 +284,22 @@ export default function Register() {
                   </span>
                 </label>
                 <Input
+                  className="py-4"
                   id="displayName"
                   name="displayName"
                   type="text"
                   value={formData.displayName}
                   onChange={handleChange}
-                  className="py-4"
                 />
               </div>
 
               <div className="pt-4">
                 <Button
-                  type="submit"
                   className="w-full py-6 text-lg"
                   disabled={
                     isSubmitting || (auth.loading !== undefined && auth.loading)
                   }
+                  type="submit"
                 >
                   {isSubmitting || (auth.loading !== undefined && auth.loading)
                     ? "Creating Account..."
@@ -311,8 +314,8 @@ export default function Register() {
           <p className="text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link
-              href="/auth/login"
               className="font-medium text-primary hover:underline"
+              href="/auth/login"
             >
               Sign in
             </Link>

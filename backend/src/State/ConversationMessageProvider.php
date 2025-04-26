@@ -29,7 +29,7 @@ readonly class ConversationMessageProvider
         $currentUser = $this->security->getUser();
         $isParticipant = false;
         foreach ($conversation->getParticipants() as $participant) {
-            if ($participant->getUser()->getId() === $currentUser->getId() && $participant->getLeftAt() === null) {
+            if ($participant->getUser()->getId() === $currentUser->getId()) {
                 $isParticipant = true;
                 break;
             }

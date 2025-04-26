@@ -74,13 +74,7 @@ final class ConversationProcessor implements ProcessorInterface
             $conversation->addParticipant($participant);
         }
 
-        // Save everything to the database
-        $this->entityManager->persist($conversation);
-        foreach ($conversation->getParticipants() as $participant) {
-            $this->entityManager->persist($participant);
-        }
-        $this->entityManager->flush();
-
-        return $conversation;
+        // Use the persistProcessor instead of manually flushing
+        return $this->persistProcessor->process($conversation, $operation, $uriVariables, $context);
     }
 }

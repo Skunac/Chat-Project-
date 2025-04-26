@@ -22,11 +22,13 @@ import {
 } from "@heroui/dropdown";
 
 import { useAuth } from "@/context/authContext";
+import { useConversation } from "@/context/conversationContext";
 
 export default function Sidebar() {
   const { user, loadingInitial, validating, loading, logout, refreshUserData } =
     useAuth();
   const [searchQuery, setSearchQuery] = useState("");
+  const { setActiveConversation } = useConversation();
 
   // Filter conversations based on search query
   const filteredConversations = user?.conversations
@@ -207,9 +209,12 @@ export default function Sidebar() {
             {user.conversations && user.conversations.length > 0 ? (
               <div className="space-y-1">
                 {filteredConversations.map((conversation) => (
-                  <div
+                  <button
                     key={conversation.id}
-                    className="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-default-100"
+                    className="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-default-100 w-full"
+                    onClick={() => {
+                      setActiveConversation(conversation.id);
+                    }}
                   >
                     <Avatar
                       fallback={
@@ -245,7 +250,7 @@ export default function Sidebar() {
                         </p>
                       </div>
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             ) : (

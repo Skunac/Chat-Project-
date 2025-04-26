@@ -10,3 +10,13 @@ export interface User {
   lastSeen: Date;
   conversations: ConversationPreview[] | null;
 }
+
+export interface ApiPlatformUser {
+  "@context": string;
+  "@id": string;
+  "@type": string;
+  email: string;
+  displayName: string;
+  avatarUrl: string | null;
+  lastSeen: Date;
+}
