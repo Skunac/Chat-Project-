@@ -90,8 +90,9 @@ if (typeof window !== 'undefined') {
         },
         async (error: AxiosError) => {
             const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
+            const isLoginRequest = originalRequest.url?.includes('/auth/login');
 
-            if (error.response?.status === 401 && !originalRequest._retry) {
+            if (error.response?.status === 401 && !originalRequest._retry && !isLoginRequest) {
                 if (isRefreshing) {
                     try {
                         const newToken = await new Promise<string>((resolve, reject) => {

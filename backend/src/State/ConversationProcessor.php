@@ -44,9 +44,7 @@ final class ConversationProcessor implements ProcessorInterface
         $creatorParticipant = new ConversationParticipant();
         $creatorParticipant->setUser($currentUser)
             ->setConversation($conversation)
-            ->setRole('ADMIN')
-            ->setIsAdmin(true);
-
+            ->setRole('ADMIN');
         $conversation->addParticipant($creatorParticipant);
 
         // Add other participants
@@ -74,11 +72,6 @@ final class ConversationProcessor implements ProcessorInterface
                 ->setRole('MEMBER');
 
             $conversation->addParticipant($participant);
-        }
-
-        // For non-group conversations, ensure there are exactly 2 participants
-        if (!$conversation->isGroup() && count($conversation->getParticipants()) !== 2) {
-            throw new BadRequestHttpException('A direct conversation must have exactly two participants.');
         }
 
         // Save everything to the database
