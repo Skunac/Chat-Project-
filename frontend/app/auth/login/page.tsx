@@ -12,6 +12,7 @@ import { RiLockPasswordLine } from "react-icons/ri";
 import { z } from "zod";
 
 import { useAuth } from "@/context/authContext";
+import authService from "@/services/authService";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -29,7 +30,6 @@ interface FormErrors {
 
 export default function Login() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { login, user, loading, error, clearError } = useAuth();
 
   const [formData, setFormData] = useState<FormData>({
@@ -115,7 +115,44 @@ export default function Login() {
   };
 
   const handleGoogleLogin = () => {
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google/connect`;
+    try {
+      const googleAuthUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
+      const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+      console.log('Using client ID:', clientId ? `${clientId.substring(0, 6)}...` : 'undefined');
+
+      if (!clientId) {
+        setStatusMessage({
+          type: "error",
+          message: "Google login is not properly configured. Please try again later."
+        });
+        return;
+      }
+
+      const redirectUri = `${window.location.origin}/auth/google/callback`;
+      console.log('Redirect URI:', redirectUri);
+
+      const params = {
+        client_id: clientId,
+        redirect_uri: redirectUri,
+        response_type: 'code',
+        scope: 'email profile',
+        access_type: 'offline',
+        prompt: 'consent',
+        // Adding a state parameter for security
+        state: Math.random().toString(36).substring(2)
+      };
+
+      const authUrl = `${googleAuthUrl}?${new URLSearchParams(params).toString()}`;
+      console.log('Full auth URL:', authUrl);
+      window.location.href = authUrl;
+    } catch (error) {
+      console.error('Error initiating Google login:', error);
+      setStatusMessage({
+        type: "error",
+        message: "Failed to connect to Google. Please try again."
+      });
+    }
   };
 
   return (

@@ -6,6 +6,10 @@ export interface TokenResponse {
   refresh_token?: string;
 }
 
+export interface GoogleLoginResponse {
+  redirect_url: string;
+}
+
 export interface LoginCredentials {
   email: string;
   password: string;
@@ -41,6 +45,18 @@ class AuthService {
     return {
       token: response.data.token,
       refresh_token: response.data.refresh_token,
+    };
+  }
+
+  /**
+   * Process Google OAuth callback code
+   */
+  async handleGoogleCallback(code: string): Promise<TokenResponse> {
+    const response = await axiosInstance.get(`/auth/google/callback?code=${code}`);
+
+    return {
+      token: response.data.data.token,
+      refresh_token: response.data.data.refresh_token,
     };
   }
 

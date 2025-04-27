@@ -48,16 +48,21 @@ class GoogleAuthController extends AbstractController
     public function callback(#[MapQueryString] GoogleCallbackParamsDto $params): JsonResponse
     {
         try {
-            $googleAuthDto = $this->googleAuthService->handleCallback($params->code);
+            // Validate the code
+            if (empty($params->code)) {
+                return $this->apiResponse->error('Authorization code is missing', Response::HTTP_BAD_REQUEST);
+            }
 
+            // Process the code to get user info and authenticate
+            $googleAuthDto = $this->googleAuthService->handleCallback($params->code);
             $result = $this->googleAuthService->processGoogleLogin($googleAuthDto);
 
+            // Return tokens and user data as JSON
             return $this->apiResponse->success(
                 $result,
                 Response::HTTP_OK,
                 'Google authentication successful'
             );
-
         } catch (\Exception $e) {
             return $this->apiResponse->serverError('Google authentication failed', $e);
         }
