@@ -30,6 +30,7 @@ use Symfony\Component\Validator\Constraints as Assert;
             security: "is_granted('ROLE_USER')"
         ),
         new Post(
+            normalizationContext: ['groups' => ['conversation:item:read']],
             denormalizationContext: ['groups' => ['conversation:write']],
             security: "is_granted('ROLE_USER')",
             input: ConversationInput::class,

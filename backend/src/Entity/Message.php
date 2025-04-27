@@ -42,6 +42,7 @@ use ApiPlatform\OpenApi\Model\Parameter;
             security: "is_granted('ROLE_USER')",
         ),
         new Post(
+            normalizationContext: ['groups' => ['message:item:read']],
             denormalizationContext: ['groups' => ['message:write']],
             security: "is_granted('ROLE_USER')",
             input: MessageInput::class,
