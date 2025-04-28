@@ -261,18 +261,6 @@ export default function Sidebar() {
               </div>
             )}
           </div>
-
-          {/* Create new conversation button */}
-          <div className="p-3 mt-auto">
-            <Button
-              className="w-full"
-              color="primary"
-              size="sm"
-              startContent={<LuPlus className="h-4 w-4" />}
-            >
-              New Conversation
-            </Button>
-          </div>
         </>
       )}
     </div>
