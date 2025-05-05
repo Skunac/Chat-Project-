@@ -24,20 +24,15 @@ use Symfony\Component\Validator\Constraints as Assert;
             normalizationContext: ['groups' => ['participant:item:read']]
         ),
         new Post(
-            denormalizationContext: ['groups' => ['participant:write']],
-            security: "is_granted('CONVERSATION_EDIT', object.getConversation())"
+            denormalizationContext: ['groups' => ['participant:write']]
         ),
         new Put(
-            denormalizationContext: ['groups' => ['participant:update']],
-            security: "is_granted('PARTICIPANT_EDIT', object)"
+            denormalizationContext: ['groups' => ['participant:update']]
         ),
         new Patch(
-            denormalizationContext: ['groups' => ['participant:update']],
-            security: "is_granted('PARTICIPANT_EDIT', object)"
+            denormalizationContext: ['groups' => ['participant:update']]
         ),
-        new Delete(
-            security: "is_granted('PARTICIPANT_DELETE', object)"
-        )
+        new Delete()
     ],
     normalizationContext: ['groups' => ['participant:read']],
     denormalizationContext: ['groups' => ['participant:write']]

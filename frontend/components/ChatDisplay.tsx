@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Avatar } from "@heroui/avatar";
 import { Input } from "@heroui/input";
 import { Button } from "@heroui/button";
-import { LuSend, LuLoader } from "react-icons/lu";
+import { LuSend, LuLoader, LuUserPlus } from "react-icons/lu";
 
 import { useAuth } from "@/context/authContext";
 import { useConversation } from "@/context/conversationContext";
@@ -13,6 +13,7 @@ import { Conversation } from "@/types/conversation";
 import { ConversationMessage } from "@/types/message";
 import conversationService from "@/services/conversationService";
 import messageService from "@/services/messageService";
+import InviteUserModal from "@/components/inviteModal";
 
 export default function ChatDisplay() {
   const { activeConversationId } = useConversation();
@@ -23,6 +24,7 @@ export default function ChatDisplay() {
   const [loading, setLoading] = useState(false);
   const [sendingMessage, setSendingMessage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 
   // Setup Mercure subscription when conversation is active
   const mercureTopics = activeConversationId
@@ -144,21 +146,17 @@ export default function ChatDisplay() {
     }
   };
 
-  // Render the connection status with more detail for debugging
-  const renderConnectionStatus = () => {
-    if (!activeConversationId) return null;
+  const handleInviteSuccess = async () => {
+    // Refresh conversation data to show new participant
+    try {
+      if (!activeConversationId) return;
+      const conversationData =
+        await conversationService.getConversation(activeConversationId);
 
-    return (
-      <div
-        className={`px-2 py-1 text-xs rounded ${
-          isConnected
-            ? "bg-green-100 text-green-600"
-            : "bg-yellow-100 text-yellow-600"
-        }`}
-      >
-        {isConnected ? "Live updates active" : "Connecting to live updates..."}
-      </div>
-    );
+      setConversation(conversationData);
+    } catch (error) {
+      console.error("Failed to refresh conversation data:", error);
+    }
   };
 
   // Show empty state when no conversation is selected
@@ -204,7 +202,16 @@ export default function ChatDisplay() {
               {conversation.participants?.length || 0} participants
             </p>
           </div>
-          {renderConnectionStatus()}
+          <div className="flex items-center gap-2">
+            <Button
+              isIconOnly
+              size="sm"
+              variant="light"
+              onClick={() => setIsInviteModalOpen(true)}
+            >
+              <LuUserPlus className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       )}
 
@@ -285,6 +292,14 @@ export default function ChatDisplay() {
           </p>
         )}
       </form>
+      {activeConversationId && (
+        <InviteUserModal
+          conversationId={activeConversationId}
+          isOpen={isInviteModalOpen}
+          onClose={() => setIsInviteModalOpen(false)}
+          onSuccess={handleInviteSuccess}
+        />
+      )}
     </div>
   );
 }

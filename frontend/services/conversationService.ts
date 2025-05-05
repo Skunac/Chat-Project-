@@ -66,6 +66,41 @@ class ConversationService {
       throw error;
     }
   }
+
+  async addParticipantToConversation(
+    conversationId: string,
+    email: string,
+  ): Promise<any> {
+    try {
+      const response = await axiosInstance.get(`/users?email=${email}`);
+
+      if (!response.data || response.data.length === 0) {
+        throw new Error("User not found");
+      }
+
+      const userId = response.data[0].id;
+
+      const participant = {
+        user: `/api/users/${userId}`,
+        conversation: `/api/conversations/${conversationId}`,
+        role: "MEMBER",
+      };
+
+      const participantResponse = await axiosInstance.post(
+        "/conversation_participants",
+        participant,
+      );
+
+      if (participantResponse.status !== 201) {
+        throw new Error("Failed to add participant");
+      }
+
+      return participantResponse.data;
+    } catch (error) {
+      console.error("Error adding participant:", error);
+      throw error;
+    }
+  }
 }
 
 const conversationService = new ConversationService();
