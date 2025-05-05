@@ -47,34 +47,33 @@ final class ConversationProcessor implements ProcessorInterface
             ->setRole('ADMIN');
         $conversation->addParticipant($creatorParticipant);
 
-        // Add other participants
-        $userRepository = $this->entityManager->getRepository(User::class);
+//        // Add other participants
+//        $userRepository = $this->entityManager->getRepository(User::class);
+//
+//        if (empty($data->participantIds)) {
+//            throw new BadRequestHttpException('At least one participant is required');
+//        }
+//
+//        foreach ($data->participantIds as $userId) {
+//            // Skip if the ID is the same as the creator
+//            if ($userId === $currentUser->getId()) {
+//                continue;
+//            }
+//
+//            $user = $userRepository->find($userId);
+//
+//            if (!$user) {
+//                throw new NotFoundHttpException(sprintf('User with ID "%s" not found', $userId));
+//            }
+//
+//            $participant = new ConversationParticipant();
+//            $participant->setUser($user)
+//                ->setConversation($conversation)
+//                ->setRole('MEMBER');
+//
+//            $conversation->addParticipant($participant);
+//        }
 
-        if (empty($data->participantIds)) {
-            throw new BadRequestHttpException('At least one participant is required');
-        }
-
-        foreach ($data->participantIds as $userId) {
-            // Skip if the ID is the same as the creator
-            if ($userId === $currentUser->getId()) {
-                continue;
-            }
-
-            $user = $userRepository->find($userId);
-
-            if (!$user) {
-                throw new NotFoundHttpException(sprintf('User with ID "%s" not found', $userId));
-            }
-
-            $participant = new ConversationParticipant();
-            $participant->setUser($user)
-                ->setConversation($conversation)
-                ->setRole('MEMBER');
-
-            $conversation->addParticipant($participant);
-        }
-
-        // Use the persistProcessor instead of manually flushing
         return $this->persistProcessor->process($conversation, $operation, $uriVariables, $context);
     }
 }

@@ -18,16 +18,4 @@ final class ConversationInput
     #[Assert\Url(message: 'The avatar URL {{ value }} is not a valid URL')]
     #[Groups(['conversation:write'])]
     public ?string $avatarUrl = null;
-
-    /**
-     * List of participant user IDs to add to the conversation
-     */
-    #[ApiProperty(
-        description: 'IDs of users to add as participants',
-        example: ['550e8400-e29b-41d4-a716-446655440000']
-    )]
-    #[Assert\NotNull(message: 'Participant IDs are required')]
-    #[Assert\Count(min: 1, minMessage: 'At least one participant is required')]
-    #[Groups(['conversation:write'])]
-    public array $participantIds = [];
 }

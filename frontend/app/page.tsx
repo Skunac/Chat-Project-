@@ -1,5 +1,3 @@
-"use client";
-
 import Sidebar from "@/components/SideBar";
 import ChatDisplay from "@/components/ChatDisplay";
 

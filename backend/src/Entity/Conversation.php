@@ -85,7 +85,7 @@ class Conversation
     #[Groups(['conversation:item:read','conversation:write'])]
     private ?User $creator = null;
 
-    #[ORM\OneToMany(targetEntity: ConversationParticipant::class, mappedBy: 'conversation', orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: ConversationParticipant::class, mappedBy: 'conversation', cascade: ['persist'], orphanRemoval: true)]
     #[Groups(['conversation:item:read'])]
     private Collection $participants;
 

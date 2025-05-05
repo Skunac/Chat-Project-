@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState } from "react";
 import { Card } from "@heroui/card";
 import { Button } from "@heroui/button";
@@ -23,12 +25,13 @@ import {
 
 import { useAuth } from "@/context/authContext";
 import { useConversation } from "@/context/conversationContext";
+import ConversationService from "@/services/conversationService";
 
 export default function Sidebar() {
-  const { user, loadingInitial, validating, loading, logout, refreshUserData } =
-    useAuth();
+  const { user, loadingInitial, validating, loading, logout, refreshUserData } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const { setActiveConversation } = useConversation();
+  const { createConversation } = ConversationService;
 
   // Filter conversations based on search query
   const filteredConversations = user?.conversations
@@ -53,6 +56,15 @@ export default function Sidebar() {
       console.error("Failed to refresh user data:", error);
     }
   };
+
+  const handleNewConversation = async () => {
+    try {
+      const newConversation = await createConversation("test","https://lh3.googleusercontent.com/a/ACg8ocIHPPf0YhMB9oHQv0rHIye_aLyMISje21vWWeOX1wMZV_H7Ayc=s96-c")
+      refreshUserData();
+    } catch (e) {
+      console.error("Failed to create new conversation:", e);
+    }
+  }
 
   // Format timestamp for messages
   const formatMessageTime = (timestamp: string) => {
@@ -202,9 +214,13 @@ export default function Sidebar() {
               <h2 className="text-xs font-semibold text-default-600">
                 Conversations
               </h2>
-              <Button isIconOnly size="sm" variant="light">
-                <LuPlus className="h-4 w-4" />
-              </Button>
+              <Dropdown>
+                <DropdownTrigger>
+                  <Button isIconOnly size="sm" variant="light" onPress={() => handleNewConversation()}>
+                    <LuPlus className="h-4 w-4" />
+                  </Button>
+                </DropdownTrigger>
+              </Dropdown>
             </div>
 
             {user.conversations && user.conversations.length > 0 ? (
