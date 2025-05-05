@@ -6,8 +6,13 @@ WORKDIR /app
 # Copy only the files needed for composer install
 COPY backend/composer.json backend/composer.lock ./
 
+# Install PHP Redis extension in the composer image
+RUN apk add --no-cache $PHPIZE_DEPS redis \
+    && pecl install redis \
+    && docker-php-ext-enable redis
+
 # Install dependencies without dev dependencies
-RUN composer install --no-dev --no-scripts --no-interaction --optimize-autoloader
+RUN composer install --no-dev --no-scripts --no-interaction --optimize-autoloader --ignore-platform-reqs
 
 # Stage 2: Build the application
 FROM php:8.2-fpm-alpine as app_build
@@ -52,6 +57,13 @@ RUN apk add --no-cache $PHPIZE_DEPS redis \
     && docker-php-ext-enable redis \
     && apk del $PHPIZE_DEPS
 
+# Copy custom PHP configuration
+COPY docker/prod/php/php.ini $PHP_INI_DIR/php.ini
+
+# Create log directories
+RUN mkdir -p /var/log/php && \
+    chown -R www-data:www-data /var/log/php
+
 # Copy application from build stage
 COPY --from=app_build /app .
 
@@ -62,7 +74,5 @@ RUN chown -R www-data:www-data var
 RUN adduser --disabled-password --gecos "" app_user
 USER app_user
 
-# Configure PHP for production
-COPY docker/prod/php/php.ini $PHP_INI_DIR/php.ini
-
+# Default command
 CMD ["php-fpm"]
