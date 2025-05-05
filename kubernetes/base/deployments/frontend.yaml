@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: chat-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+      annotations:
+        vault.hashicorp.com/agent-inject: 'true'
+        vault.hashicorp.com/role: 'chat-app-frontend'
+        vault.hashicorp.com/agent-inject-secret-secrets.env: 'chat-app/data/frontend'
+        vault.hashicorp.com/agent-inject-template-secrets.env: |
+          {{- with secret "chat-app/data/frontend" -}}
+          export GOOGLE_CLIENT_ID="{{ .Data.data.google_client_id }}"
+          export GOOGLE_CLIENT_SECRET="{{ .Data.data.google_client_secret }}"
+          {{- end -}}
+    spec:
+      serviceAccountName: frontend-sa
+      containers:
+        - name: nextjs
+          image: your-registry/chat-app-frontend:latest
+          ports:
+            - containerPort: 3000
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              source /vault/secrets/secrets.env
+              node server.js
+          env:
+            - name: NEXT_PUBLIC_API_URL
+              value: "https://api.your-domain.com"
+            - name: NEXT_PUBLIC_MERCURE_HUB_URL
+              value: "https://mercure.your-domain.com/.well-known/mercure"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 20

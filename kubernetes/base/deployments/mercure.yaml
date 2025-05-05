@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mercure
+  namespace: chat-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mercure
+  template:
+    metadata:
+      labels:
+        app: mercure
+    spec:
+      serviceAccountName: mercure-sa
+      containers:
+        - name: mercure
+          image: dunglas/mercure
+          ports:
+            - containerPort: 80
+          env:
+            - name: SERVER_NAME
+              value: ":80"
+            - name: MERCURE_PUBLISHER_JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: mercure-keys
+                  key: publisher-key
+            - name: MERCURE_SUBSCRIBER_JWT_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: mercure-keys
+                  key: subscriber-key
+            - name: MERCURE_EXTRA_DIRECTIVES
+              value: |
+                cors_origins *
+                anonymous
+                subscriptions
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"

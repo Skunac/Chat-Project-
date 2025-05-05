@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: chat-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+      annotations:
+        vault.hashicorp.com/agent-inject: 'true'
+        vault.hashicorp.com/role: 'chat-app-backend'
+        vault.hashicorp.com/agent-inject-secret-secrets.env: 'chat-app/data/backend'
+        vault.hashicorp.com/agent-inject-template-secrets.env: |
+          {{- with secret "chat-app/data/backend" -}}
+          export APP_SECRET="{{ .Data.data.app_secret }}"
+          export DATABASE_URL="{{ .Data.data.database_url }}"
+          export MERCURE_JWT_SECRET="{{ .Data.data.mercure_jwt_secret }}"
+          export JWT_PASSPHRASE="{{ .Data.data.jwt_passphrase }}"
+          {{- end -}}
+    spec:
+      serviceAccountName: backend-sa
+      containers:
+        - name: php-fpm
+          image: your-registry/chat-app-backend:latest
+          ports:
+            - containerPort: 9000
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              source /vault/secrets/secrets.env
+              php-fpm
+          env:
+            - name: APP_ENV
+              valueFrom:
+                configMapKeyRef:
+                  name: app-config
+                  key: APP_ENV
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "300m"
+          readinessProbe:
+            tcpSocket:
+              port: 9000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 9000
+            initialDelaySeconds: 60
+            periodSeconds: 20
+        - name: caddy
+          image: your-registry/chat-app-caddy:latest
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "100m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 30
+            periodSeconds: 20

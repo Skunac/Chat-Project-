@@ -1,0 +1,97 @@
+# Main server configuration
+{
+    # Global options
+    admin off  # Disable the admin API for security
+    auto_https disable_redirects  # Let Kubernetes handle HTTPS redirects if needed
+
+    # Set reasonable defaults for production
+    servers {
+        protocol {
+            experimental_http3  # Enable HTTP/3 support
+        }
+    }
+}
+
+# Main server block
+:80 {
+    # Root directory of your Symfony application
+    root * /var/www/html/public
+
+    # Enable logging
+    log {
+        output file /var/log/caddy/access.log
+    }
+
+    # Security headers
+    header {
+        # CORS configuration for API routes
+        @api {
+            path /api/*
+        }
+        Access-Control-Allow-Origin * @api
+        Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" @api
+        Access-Control-Allow-Headers "Origin, X-Requested-With, Content-Type, Accept, Authorization" @api
+
+        # Security headers for all responses
+        X-Frame-Options "SAMEORIGIN"
+        X-Content-Type-Options "nosniff"
+        X-XSS-Protection "1; mode=block"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+        # Remove sensitive headers
+        -Server
+    }
+
+    # Handle OPTIONS preflight requests
+    @options {
+        method OPTIONS
+    }
+    respond @options 204
+
+    # Mercure hub proxy
+    handle /.well-known/mercure* {
+        reverse_proxy mercure:80 {
+            header_up Host {host}
+            header_up X-Forwarded-For {remote}
+            header_up X-Forwarded-Proto {scheme}
+
+            # WebSocket support
+            transport http {
+                keepalive 24h
+            }
+        }
+    }
+
+    # Static file handling with cache control
+    @static {
+        path *.css *.js *.ico *.gif *.jpg *.jpeg *.png *.svg *.woff *.woff2
+    }
+    handle @static {
+        file_server
+        header Cache-Control "public, max-age=2592000" # 30 days
+    }
+
+    # PHP handling
+    handle {
+        # Try static files first, then PHP
+        try_files {path} /index.php{path}?{query}
+
+        # Pass to PHP-FPM
+        @phpFiles {
+            path /index.php*
+        }
+        php_fastcgi @phpFiles backend:9000 {
+            resolve_root_symlink
+            trusted_proxies private_ranges
+            env APP_ENV production
+        }
+
+        # Block access to other PHP files
+        @otherPhp {
+            path *.php
+            not path /index.php*
+        }
+        respond @otherPhp 404
+    }
+}

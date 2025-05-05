@@ -1,0 +1,93 @@
+version: '3.8'
+
+services:
+  # PHP/Symfony Backend
+  backend:
+    build:
+      context: .
+      dockerfile: docker/prod/backend.Dockerfile
+    restart: unless-stopped
+    volumes:
+      - symfony_var:/var/www/html/var
+    depends_on:
+      - database
+      - redis
+      - mercure
+    environment:
+      - APP_ENV=prod
+      - APP_SECRET=${APP_SECRET}
+      - DATABASE_URL=${DATABASE_URL}
+      - MERCURE_URL=${MERCURE_URL}
+      - MERCURE_PUBLIC_URL=${MERCURE_PUBLIC_URL}
+      - MERCURE_JWT_SECRET=${MERCURE_JWT_SECRET}
+      - JWT_SECRET_KEY=%kernel.project_dir%/config/jwt/private.pem
+      - JWT_PUBLIC_KEY=%kernel.project_dir%/config/jwt/public.pem
+      - JWT_PASSPHRASE=${JWT_PASSPHRASE}
+
+  # Caddy for Symfony
+  caddy:
+    build:
+      context: .
+      dockerfile: docker/prod/caddy.Dockerfile
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/prod/frontend.Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - NEXT_PUBLIC_MERCURE_HUB_URL=${NEXT_PUBLIC_MERCURE_HUB_URL}
+
+  # PostgreSQL Database
+  database:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Redis for caching and messaging
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+
+  # Mercure hub for real-time updates
+  mercure:
+    image: dunglas/mercure
+    restart: unless-stopped
+    environment:
+      SERVER_NAME: ':80'
+      MERCURE_PUBLISHER_JWT_KEY: ${MERCURE_JWT_SECRET}
+      MERCURE_SUBSCRIBER_JWT_KEY: ${MERCURE_JWT_SECRET}
+      CORS_ALLOWED_ORIGINS: '*'
+      MERCURE_EXTRA_DIRECTIVES: |
+        cors_origins ${CORS_ALLOWED_ORIGINS}
+        anonymous
+        subscriptions
+
+volumes:
+  caddy_data:
+  caddy_config:
+  symfony_var:
+  postgres_data:
+  redis_data:
