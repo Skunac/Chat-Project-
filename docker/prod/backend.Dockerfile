@@ -63,6 +63,6 @@ RUN adduser --disabled-password --gecos "" app_user
 USER app_user
 
 # Configure PHP for production
-COPY backend/docker/prod/php/php.ini $PHP_INI_DIR/php.ini
+COPY docker/prod/php/php.ini $PHP_INI_DIR/php.ini
 
 CMD ["php-fpm"]
