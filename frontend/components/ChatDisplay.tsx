@@ -16,7 +16,7 @@ import messageService from "@/services/messageService";
 
 export default function ChatDisplay() {
   const { activeConversationId } = useConversation();
-  const { user } = useAuth();
+  const { user, refreshUserData } = useAuth();
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -124,6 +124,7 @@ export default function ChatDisplay() {
         newMessage,
       );
 
+      await refreshUserData();
       console.log("Message sent successfully:", sentMessage);
 
       // Add optimistically for better UX - will be handled by Mercure otherwise
