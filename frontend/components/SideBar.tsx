@@ -366,7 +366,10 @@ export default function Sidebar() {
             )}
             <div className="space-y-4">
               <div>
-                <label className="text-sm font-medium mb-1 block">
+                <label
+                  className="text-sm font-medium mb-1 block"
+                  htmlFor={"conversationName"}
+                >
                   Conversation Name
                 </label>
                 <Input
@@ -377,7 +380,10 @@ export default function Sidebar() {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1 block">
+                <label
+                  className="text-sm font-medium mb-1 block"
+                  htmlFor={"avatarUrl"}
+                >
                   Avatar URL (optional)
                 </label>
                 <Input

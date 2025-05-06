@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { Link } from "@heroui/link";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
@@ -12,7 +12,6 @@ import { RiLockPasswordLine } from "react-icons/ri";
 import { z } from "zod";
 
 import { useAuth } from "@/context/authContext";
-import authService from "@/services/authService";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -116,41 +115,48 @@ export default function Login() {
 
   const handleGoogleLogin = () => {
     try {
-      const googleAuthUrl = 'https://accounts.google.com/o/oauth2/v2/auth';
+      const googleAuthUrl = "https://accounts.google.com/o/oauth2/v2/auth";
       const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
-      console.log('Using client ID:', clientId ? `${clientId.substring(0, 6)}...` : 'undefined');
+      console.log(
+        "Using client ID:",
+        clientId ? `${clientId.substring(0, 6)}...` : "undefined",
+      );
 
       if (!clientId) {
         setStatusMessage({
           type: "error",
-          message: "Google login is not properly configured. Please try again later."
+          message:
+            "Google login is not properly configured. Please try again later.",
         });
+
         return;
       }
 
       const redirectUri = `${window.location.origin}/auth/google/callback`;
-      console.log('Redirect URI:', redirectUri);
+
+      console.log("Redirect URI:", redirectUri);
 
       const params = {
         client_id: clientId,
         redirect_uri: redirectUri,
-        response_type: 'code',
-        scope: 'email profile',
-        access_type: 'offline',
-        prompt: 'consent',
+        response_type: "code",
+        scope: "email profile",
+        access_type: "offline",
+        prompt: "consent",
         // Adding a state parameter for security
-        state: Math.random().toString(36).substring(2)
+        state: Math.random().toString(36).substring(2),
       };
 
       const authUrl = `${googleAuthUrl}?${new URLSearchParams(params).toString()}`;
-      console.log('Full auth URL:', authUrl);
+
+      console.log("Full auth URL:", authUrl);
       window.location.href = authUrl;
     } catch (error) {
-      console.error('Error initiating Google login:', error);
+      console.error("Error initiating Google login:", error);
       setStatusMessage({
         type: "error",
-        message: "Failed to connect to Google. Please try again."
+        message: "Failed to connect to Google. Please try again.",
       });
     }
   };
@@ -289,7 +295,7 @@ export default function Login() {
         {/* Register link */}
         <div className="flex justify-center border-t p-6">
           <p className="text-sm text-muted-foreground">
-            Don't have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link
               className="font-medium text-primary hover:underline"
               href="/auth/register"

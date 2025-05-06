@@ -148,7 +148,9 @@ export default function InviteUserModal({
           )}
 
           <div>
-            <label className="text-sm font-medium mb-1 block">User Email</label>
+            <label className="text-sm font-medium mb-1 block" htmlFor={"email"}>
+              User Email
+            </label>
             <Input
               fullWidth
               placeholder="Enter user email address"

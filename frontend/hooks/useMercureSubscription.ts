@@ -1,13 +1,16 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback } from "react";
 
 type MercureOptions = {
   topics: string[]; // Keeping array to match your current implementation
   onMessage?: (data: any) => void;
 };
 
-export function useMercureSubscription<T>({ topics, onMessage }: MercureOptions) {
+export function useMercureSubscription<T>({
+  topics,
+  onMessage,
+}: MercureOptions) {
   const [data, setData] = useState<T | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
@@ -15,7 +18,7 @@ export function useMercureSubscription<T>({ topics, onMessage }: MercureOptions)
   // Cleanup function to close EventSource
   const cleanupEventSource = useCallback(() => {
     if (eventSourceRef.current) {
-      console.log('Closing Mercure connection');
+      console.log("Closing Mercure connection");
       eventSourceRef.current.close();
       eventSourceRef.current = null;
     }
@@ -25,6 +28,7 @@ export function useMercureSubscription<T>({ topics, onMessage }: MercureOptions)
     // Don't continue if no topics are provided
     if (!topics.length || !process.env.NEXT_PUBLIC_MERCURE_HUB_URL) {
       setIsConnected(false);
+
       return cleanupEventSource();
     }
 
@@ -36,18 +40,18 @@ export function useMercureSubscription<T>({ topics, onMessage }: MercureOptions)
       const url = new URL(process.env.NEXT_PUBLIC_MERCURE_HUB_URL);
 
       // Add each topic as a separate parameter
-      topics.forEach(topic => {
-        url.searchParams.append('topic', topic);
+      topics.forEach((topic) => {
+        url.searchParams.append("topic", topic);
       });
 
-      console.log('Connecting to Mercure at:', url.toString());
+      console.log("Connecting to Mercure at:", url.toString());
 
       // Create a new EventSource WITHOUT withCredentials
       const eventSource = new EventSource(url.toString());
 
       // Handle connection open
       eventSource.onopen = () => {
-        console.log('Mercure connection established');
+        console.log("Mercure connection established");
         setIsConnected(true);
       };
 
@@ -55,7 +59,8 @@ export function useMercureSubscription<T>({ topics, onMessage }: MercureOptions)
       eventSource.onmessage = (event) => {
         try {
           const parsedData = JSON.parse(event.data);
-          console.log('Received Mercure message:', parsedData);
+
+          console.log("Received Mercure message:", parsedData);
 
           // Update internal state
           setData(parsedData);
@@ -65,13 +70,13 @@ export function useMercureSubscription<T>({ topics, onMessage }: MercureOptions)
             onMessage(parsedData);
           }
         } catch (error) {
-          console.error('Error parsing Mercure message:', error);
+          console.error("Error parsing Mercure message:", error);
         }
       };
 
       // Handle errors
       eventSource.onerror = (error) => {
-        console.error('Mercure connection error:', error);
+        console.error("Mercure connection error:", error);
         setIsConnected(false);
 
         // Don't reconnect here as it can cause infinite reconnection loops
@@ -85,11 +90,12 @@ export function useMercureSubscription<T>({ topics, onMessage }: MercureOptions)
         cleanupEventSource();
       };
     } catch (error) {
-      console.error('Failed to setup Mercure connection:', error);
+      console.error("Failed to setup Mercure connection:", error);
       setIsConnected(false);
+
       return () => {}; // Return empty cleanup function
     }
-  }, [topics.join(','), onMessage, cleanupEventSource]); // Only depend on topics string, not array
+  }, [topics.join(","), onMessage, cleanupEventSource]); // Only depend on topics string, not array
 
   return { data, isConnected };
 }

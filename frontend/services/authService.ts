@@ -52,7 +52,9 @@ class AuthService {
    * Process Google OAuth callback code
    */
   async handleGoogleCallback(code: string): Promise<TokenResponse> {
-    const response = await axiosInstance.get(`/auth/google/callback?code=${code}`);
+    const response = await axiosInstance.get(
+      `/auth/google/callback?code=${code}`,
+    );
 
     return {
       token: response.data.data.token,
