@@ -1,13 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card } from "@heroui/card";
 
 import { useAuth } from "@/context/authContext";
 import authService from "@/services/authService";
 
-function GoogleCallbackContent() {
+function GoogleCallbackWithParams() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { refreshUserData } = useAuth();
@@ -96,6 +96,24 @@ function GoogleCallbackContent() {
   );
 }
 
+function CallbackLoading() {
+  return (
+    <div className="flex items-center justify-center min-h-[calc(100vh-150px)]">
+      <Card className="w-full max-w-md shadow-xl border-0 bg-background/80 backdrop-blur-sm p-6 text-center">
+        <div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4" />
+        <h2 className="text-xl font-medium mb-2">
+          Preparing authentication...
+        </h2>
+        <p className="text-default-500">Loading authentication params...</p>
+      </Card>
+    </div>
+  );
+}
+
 export default function GoogleCallback() {
-  return <GoogleCallbackContent />;
+  return (
+    <Suspense fallback={<CallbackLoading />}>
+      <GoogleCallbackWithParams />
+    </Suspense>
+  );
 }
