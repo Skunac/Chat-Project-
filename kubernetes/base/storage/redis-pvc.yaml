@@ -4,6 +4,7 @@ metadata:
   name: redis-pvc
   namespace: chat-app
 spec:
+  storageClassName: local-path
   accessModes:
     - ReadWriteOnce
   resources:
