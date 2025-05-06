@@ -25,7 +25,7 @@ spec:
       serviceAccountName: frontend-sa
       containers:
         - name: nextjs
-          image: your-registry/chat-app-frontend:latest
+          image: ghcr.io/skunac/chat-project--frontend:latest
           ports:
             - containerPort: 3000
           command: ["/bin/sh", "-c"]
