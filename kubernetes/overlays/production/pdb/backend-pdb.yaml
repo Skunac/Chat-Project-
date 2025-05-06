@@ -1,0 +1,11 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: backend-pdb
+  namespace: chat-app-prod
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: chat-app
+      component: backend

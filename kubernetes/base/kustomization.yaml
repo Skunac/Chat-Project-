@@ -18,4 +18,5 @@ resources:
   - service-accounts/backend-sa.yaml
   - service-accounts/frontend-sa.yaml
   - service-accounts/mercure-sa.yaml
-  # Add any other resources from your base directory
+  - ingress/chat-app-ingress.yaml
+  - namespace.yaml

@@ -1,0 +1,11 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: frontend-pdb
+  namespace: chat-app-prod
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: chat-app
+      component: frontend
