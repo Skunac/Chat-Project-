@@ -7,7 +7,7 @@ import { Card } from "@heroui/card";
 import { useAuth } from "@/context/authContext";
 import authService from "@/services/authService";
 
-export default function GoogleCallback() {
+function GoogleCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { refreshUserData } = useAuth();
@@ -17,10 +17,7 @@ export default function GoogleCallback() {
 
   useEffect(() => {
     const exchangeCodeForToken = async () => {
-      // Skip if we've already processed this code
       if (hasProcessedCode.current) {
-        console.log("Code already processed, skipping");
-
         return;
       }
 
@@ -34,33 +31,20 @@ export default function GoogleCallback() {
           return;
         }
 
-        // Mark as processed immediately to prevent duplicate requests
         hasProcessedCode.current = true;
-        console.log(
-          "Processing code (first attempt):",
-          code.substring(0, 10) + "...",
-        );
 
-        // Exchange the code for tokens via your backend
         const response = await authService.handleGoogleCallback(code);
 
-        // Store the access token
         localStorage.setItem("accessToken", response.token);
 
-        // Store the refresh token if available
         if (response.refresh_token) {
           localStorage.setItem("refreshToken", response.refresh_token);
         }
 
-        // Refresh user data in the auth context
         await refreshUserData();
-
         setStatus("success");
-
-        // Redirect to home page after successful login
         setTimeout(() => router.push("/"), 1000);
       } catch (error) {
-        console.error("Google authentication error:", error);
         setStatus("error");
         setErrorMessage("Failed to complete authentication");
       }
@@ -110,4 +94,8 @@ export default function GoogleCallback() {
       </Card>
     </div>
   );
+}
+
+export default function GoogleCallback() {
+  return <GoogleCallbackContent />;
 }
