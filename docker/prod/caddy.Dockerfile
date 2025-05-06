@@ -4,11 +4,7 @@ FROM caddy:2-alpine
 COPY docker/prod/caddy/Caddyfile /etc/caddy/Caddyfile
 
 # Create log directory
-RUN mkdir -p /var/log/caddy && \
-    chown -R caddy:caddy /var/log/caddy
-
-# Use non-root user
-USER caddy
+RUN mkdir -p /var/log/caddy
 
 # Health check configuration
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
