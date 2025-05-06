@@ -24,7 +24,10 @@ spec:
         - name: php-fpm
           env:
             - name: APP_ENV
-              value: "staging"
+              valueFrom:
+                configMapKeyRef:
+                  name: prod-app-config
+                  key: APP_ENV
             - name: MERCURE_URL
               value: "http://mercure:80/.well-known/mercure"
             - name: MERCURE_PUBLIC_URL
