@@ -2,16 +2,22 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: redis
-  namespace: chat-app
+  labels:
+    app: chat-app
+    component: cache
+    tier: data
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: redis
+      app: chat-app
+      component: cache
   template:
     metadata:
       labels:
-        app: redis
+        app: chat-app
+        component: cache
+        tier: data
     spec:
       containers:
         - name: redis

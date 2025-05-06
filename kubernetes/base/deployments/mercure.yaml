@@ -2,16 +2,22 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mercure
-  namespace: chat-app
+  labels:
+    app: chat-app
+    component: mercure
+    tier: messaging
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: mercure
+      app: chat-app
+      component: mercure
   template:
     metadata:
       labels:
-        app: mercure
+        app: chat-app
+        component: mercure
+        tier: messaging
     spec:
       serviceAccountName: mercure-sa
       containers:

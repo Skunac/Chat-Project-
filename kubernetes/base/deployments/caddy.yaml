@@ -2,16 +2,22 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: caddy
-  namespace: chat-app
+  labels:
+    app: chat-app
+    component: proxy
+    tier: frontend
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: caddy
+      app: chat-app
+      component: proxy
   template:
     metadata:
       labels:
-        app: caddy
+        app: chat-app
+        component: proxy
+        tier: frontend
     spec:
       serviceAccountName: caddy-sa
       containers:

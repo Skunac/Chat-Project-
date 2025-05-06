@@ -2,16 +2,22 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
-  namespace: chat-app
+  labels:
+    app: chat-app
+    component: frontend
+    tier: application
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: frontend
+      app: chat-app
+      component: frontend
   template:
     metadata:
       labels:
-        app: frontend
+        app: chat-app
+        component: frontend
+        tier: application
       annotations:
         vault.hashicorp.com/agent-inject: 'true'
         vault.hashicorp.com/role: 'chat-app-frontend'

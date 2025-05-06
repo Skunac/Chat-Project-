@@ -2,16 +2,22 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend
-  namespace: chat-app
+  labels:
+    app: chat-app
+    component: backend
+    tier: application
 spec:
   replicas: 2
   selector:
     matchLabels:
-      app: backend
+      app: chat-app
+      component: backend
   template:
     metadata:
       labels:
-        app: backend
+        app: chat-app
+        component: backend
+        tier: application
       annotations:
         vault.hashicorp.com/agent-inject: 'true'
         vault.hashicorp.com/role: 'chat-app-backend'
