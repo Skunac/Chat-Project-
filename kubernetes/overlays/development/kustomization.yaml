@@ -10,8 +10,9 @@ resources:
 namePrefix: dev-
 
 # Add environment-specific labels
-commonLabels:
-  environment: development
+labels:
+  - pairs:
+      environment: development
 
 # Configure replicas for development (fewer resources)
 patches:
@@ -22,8 +23,7 @@ patches:
 
 # Define ConfigMap with development-specific values
 configMapGenerator:
-  - name: app-config
-    behavior: merge
+  - name: dev-app-config
     literals:
       - APP_ENV=dev
       - CORS_ALLOW_ORIGIN=^https?://(localhost|127\.0\.0\.1|chat-dev\.example\.com)(:[0-9]+)?$

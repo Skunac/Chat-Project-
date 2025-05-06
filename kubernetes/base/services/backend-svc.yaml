@@ -5,8 +5,8 @@ metadata:
   namespace: chat-app
 spec:
   selector:
-    app: backend
+    app: chat-app
+    component: backend
   ports:
     - port: 80
-      targetPort: 80
-      name: http
+      targetPort: 9000

@@ -10,8 +10,9 @@ resources:
 namePrefix: staging-
 
 # Add environment-specific labels
-commonLabels:
-  environment: staging
+labels:
+  - pairs:
+      environment: staging
 
 # Configure replicas for staging
 patches:
@@ -22,8 +23,7 @@ patches:
 
 # Define ConfigMap with staging-specific values
 configMapGenerator:
-  - name: app-config
-    behavior: merge
+  - name: staging-app-config
     literals:
       - APP_ENV=staging
       - CORS_ALLOW_ORIGIN=^https?://(staging\.example\.com)(:[0-9]+)?$

@@ -10,11 +10,12 @@ resources:
   - pdb/backend-pdb.yaml
   - pdb/frontend-pdb.yaml
 
-# No namePrefix for production (clean URLs)
+# No namePrefix for production (we want clean URLs)
 
 # Add environment-specific labels
-commonLabels:
-  environment: production
+labels:
+  - pairs:
+      environment: production
 
 # Configure production-specific settings
 patches:
@@ -26,8 +27,7 @@ patches:
 
 # Define ConfigMap with production-specific values
 configMapGenerator:
-  - name: app-config
-    behavior: merge
+  - name: prod-app-config
     literals:
       - APP_ENV=prod
       - CORS_ALLOW_ORIGIN=^https?://(chat\.example\.com|api\.example\.com|mercure\.example\.com)(:[0-9]+)?$

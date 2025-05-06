@@ -19,4 +19,5 @@ resources:
   - service-accounts/frontend-sa.yaml
   - service-accounts/mercure-sa.yaml
   - ingress/chat-app-ingress.yaml
+  - config/app-config.yaml
   - namespace.yaml
