@@ -5,16 +5,12 @@ metadata:
   namespace: chat-app
   annotations:
     kubernetes.io/ingress.class: "nginx"
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
 spec:
-  tls:
-    - hosts:
-        - chat.your-domain.com
-        - api.your-domain.com
-        - mercure.your-domain.com
-      secretName: chat-app-tls
+  ingressClassName: nginx
   rules:
-    - host: chat.your-domain.com
+    - host: chat.local.com
       http:
         paths:
           - path: /
@@ -24,7 +20,7 @@ spec:
                 name: frontend
                 port:
                   number: 3000
-    - host: api.your-domain.com
+    - host: api.local.com
       http:
         paths:
           - path: /
@@ -33,8 +29,8 @@ spec:
               service:
                 name: backend
                 port:
-                  number: 80
-    - host: mercure.your-domain.com
+                  number: 9000
+    - host: mercure.local.com
       http:
         paths:
           - path: /

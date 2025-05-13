@@ -5,7 +5,9 @@ metadata:
   namespace: chat-app
 spec:
   selector:
-    app: mercure
+    app: chat-app
+    component: mercure
   ports:
-    - port: 80
+    - name: http
+      port: 80
       targetPort: 80

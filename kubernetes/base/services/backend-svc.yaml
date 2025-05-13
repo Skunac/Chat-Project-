@@ -8,5 +8,6 @@ spec:
     app: chat-app
     component: backend
   ports:
-    - port: 80
+    - name: fpm
+      port: 9000
       targetPort: 9000

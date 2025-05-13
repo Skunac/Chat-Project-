@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: backend
+  namespace: chat-app
   labels:
     app: chat-app
     component: backend
@@ -18,35 +19,43 @@ spec:
         app: chat-app
         component: backend
         tier: application
-      annotations:
-        vault.hashicorp.com/agent-inject: 'true'
-        vault.hashicorp.com/role: 'chat-app-backend'
-        vault.hashicorp.com/agent-inject-secret-secrets.env: 'chat-app/data/backend'
-        vault.hashicorp.com/agent-inject-template-secrets.env: |
-          {{- with secret "chat-app/data/backend" -}}
-          export APP_SECRET="{{ .Data.data.app_secret }}"
-          export DATABASE_URL="{{ .Data.data.database_url }}"
-          export MERCURE_JWT_SECRET="{{ .Data.data.mercure_jwt_secret }}"
-          export JWT_PASSPHRASE="{{ .Data.data.jwt_passphrase }}"
-          {{- end -}}
     spec:
-      serviceAccountName: backend-sa
+      serviceAccountName: backend
       containers:
         - name: php-fpm
           image: ghcr.io/skunac/chat-project--backend:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 9000
-          command: ["/bin/sh", "-c"]
-          args:
-            - |
-              source /vault/secrets/secrets.env
-              php-fpm
           env:
             - name: APP_ENV
+              value: "prod"
+            - name: DATABASE_URL
               valueFrom:
-                configMapKeyRef:
-                  name: app-config
-                  key: APP_ENV
+                secretKeyRef:
+                  name: app-secrets
+                  key: database-url
+            - name: APP_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: app-secret
+            - name: MERCURE_URL
+              value: "http://mercure:80/.well-known/mercure"
+            - name: MERCURE_PUBLIC_URL
+              value: "http://mercure.local.com/.well-known/mercure"
+            - name: MERCURE_JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: mercure-jwt-secret
+            - name: JWT_PASSPHRASE
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: jwt-passphrase
+            - name: REDIS_URL
+              value: "redis://redis:6379"
           resources:
             requests:
               memory: "256Mi"
@@ -57,10 +66,16 @@ spec:
           readinessProbe:
             tcpSocket:
               port: 9000
-            initialDelaySeconds: 5
+            initialDelaySeconds: 10
             periodSeconds: 10
           livenessProbe:
             tcpSocket:
               port: 9000
             initialDelaySeconds: 60
             periodSeconds: 20
+          volumeMounts:
+            - name: symfony-var
+              mountPath: /var/www/html/var
+      volumes:
+        - name: symfony-var
+          emptyDir: {}

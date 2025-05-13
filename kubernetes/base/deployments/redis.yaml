@@ -1,12 +1,14 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: redis
+  namespace: chat-app
   labels:
     app: chat-app
     component: cache
     tier: data
 spec:
+  serviceName: redis
   replicas: 1
   selector:
     matchLabels:
@@ -25,9 +27,6 @@ spec:
           command: ["redis-server", "--appendonly", "yes"]
           ports:
             - containerPort: 6379
-          volumeMounts:
-            - name: redis-storage
-              mountPath: /data
           resources:
             requests:
               memory: "128Mi"
@@ -45,7 +44,14 @@ spec:
               command: ["redis-cli", "ping"]
             initialDelaySeconds: 30
             periodSeconds: 10
-      volumes:
-        - name: redis-storage
-          persistentVolumeClaim:
-            claimName: redis-pvc
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi

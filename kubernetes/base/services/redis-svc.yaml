@@ -5,7 +5,10 @@ metadata:
   namespace: chat-app
 spec:
   selector:
-    app: redis
+    app: chat-app
+    component: cache
   ports:
-    - port: 6379
+    - name: redis
+      port: 6379
       targetPort: 6379
+  clusterIP: None

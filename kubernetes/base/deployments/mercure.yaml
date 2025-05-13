@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: mercure
+  namespace: chat-app
   labels:
     app: chat-app
     component: mercure
@@ -19,7 +20,7 @@ spec:
         component: mercure
         tier: messaging
     spec:
-      serviceAccountName: mercure-sa
+      serviceAccountName: mercure
       containers:
         - name: mercure
           image: dunglas/mercure
@@ -31,13 +32,15 @@ spec:
             - name: MERCURE_PUBLISHER_JWT_KEY
               valueFrom:
                 secretKeyRef:
-                  name: mercure-keys
-                  key: publisher-key
+                  name: app-secrets
+                  key: mercure-jwt-secret
             - name: MERCURE_SUBSCRIBER_JWT_KEY
               valueFrom:
                 secretKeyRef:
-                  name: mercure-keys
-                  key: subscriber-key
+                  name: app-secrets
+                  key: mercure-jwt-secret
+            - name: CORS_ALLOWED_ORIGINS
+              value: "*"
             - name: MERCURE_EXTRA_DIRECTIVES
               value: |
                 cors_origins *
@@ -50,3 +53,9 @@ spec:
             limits:
               memory: "128Mi"
               cpu: "100m"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10

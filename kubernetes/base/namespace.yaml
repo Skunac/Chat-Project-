@@ -4,3 +4,4 @@ metadata:
   name: chat-app
   labels:
     app: chat-app
+    environment: production
