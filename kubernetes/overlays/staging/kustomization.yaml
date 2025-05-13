@@ -20,7 +20,6 @@ patches:
   - path: patches/resources-staging.yaml
   - path: patches/ingress-staging.yaml
   - path: patches/config-staging.yaml
-  - path: patches/storage-class-staging.yaml
 
 # Define ConfigMap with staging-specific values
 configMapGenerator:
